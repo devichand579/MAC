@@ -1,6 +1,10 @@
-# UserStudy
+# UserStudy Ap
 
-A Flask-based web application for conducting user studies for TAC and MAC models.
+A Flask-based web application for conducting user studies with various AI models for text completion and image chat.
+
+## Overview
+
+This application provides an interface for testing different AI models in a conversational context. It supports both text-only conversations and image-based conversations, with multiple model backends including MiniCPM, T5cOASST, and simple placeholder models.
 
 ## Requirements
 
