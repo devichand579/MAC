@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Autocomplete</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+</head>
+<body>
+    <div id="stats"></div>
+    <div id="model-info"></div>
+    <div style="font-size: 12px; color: grey; text-align: right;">Press Enter to submit and start a new session.</div>
+    <div id="disclaimer" style="color: red; font-size: 12px;">Disclaimer: Please do not press backspace on autocompleted characters \n type in lower characters \n press Enter to submit the session else it will not be saved.</div>
+    <div id="chat-history">
+    </div>
+    <div id="chat-input-container">
+                <input type="text" id="user-input" placeholder="Type your message..." autofocus>
+        <div id="suggestion"></div>
+        <button id="send-button">Submit</button>
+    </div>
+    <div id="rating-popup" class="hidden">
+        <p>Rate the completion (0-9):</p>
+        <div id="rating-options"></div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

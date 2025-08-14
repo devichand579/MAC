@@ -1,0 +1,96 @@
+body {
+    font-family: sans-serif;
+}
+
+#chat-history {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    height: 200px;
+    overflow-y: scroll;
+}
+
+#chat-input-container {
+    position: relative;
+    display: flex;
+}
+
+#user-input, #suggestion {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+    font-family: sans-serif;
+    border: 1px solid #ccc;
+}
+
+#user-input {
+    background: transparent;
+    position: relative;
+    z-index: 2;
+    flex-grow: 1;
+}
+
+#suggestion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #bbb;
+    z-index: 1;
+    pointer-events: none;
+    padding: 5px; /* Match user-input padding */
+    border-color: transparent;
+    background-color: transparent;
+}
+
+#send-button {
+    border: 1px solid #ccc;
+    background-color: #eee;
+    padding: 5px 10px;
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    z-index: 3;
+}
+
+#chat-history p {
+    margin: 5px 0;
+}
+
+#rating-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    z-index: 10;
+}
+
+#rating-popup.hidden {
+    display: none;
+}
+
+#rating-options {
+    display: flex;
+    justify-content: center;
+}
+
+#rating-options span {
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    margin: 0 5px;
+}
+
+#rating-options span.selected {
+    background-color: #eee;
+}
+
+#rating-options p {
+    margin: 0;
+    padding-right: 10px;
+}
