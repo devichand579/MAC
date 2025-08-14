@@ -1,0 +1,9 @@
+[submodule "chatas"]
+	path = chatas
+	url = https://github.com/sm745052/CHAT-AS-MULTIMODAL.git
+[submodule "qb"]
+	path = qb
+	url = https://github.com/sm745052/Queryblazer_edit.git
+[submodule "ms_swift_chatas"]
+	path = ms_swift_chatas
+	url = https://github.com/sm745052/ms-swift-chatas.git

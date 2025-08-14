@@ -1,0 +1,3 @@
+{"query": "What does this picture describe?", "response": "This picture has a giant panda.", "images": []}
+{"query": "What does this picture describe?", "response": "This picture has a giant panda.", "history": [], "images": []}
+{"query": "Is bamboo tasty?", "response": "It seems pretty tasty judging by the panda's expression.", "history": [["What's in this picture?", "There's a giant panda in this picture."], ["What is the panda doing?", "Eating bamboo."]], "images": []}

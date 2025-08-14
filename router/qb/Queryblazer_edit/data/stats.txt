@@ -1,0 +1,32 @@
+DDC:
+    test_formatted:
+        seen: 
+            lines: 8681
+        unseen:
+            lines: 438188
+    test:
+        lines: 7986
+        avg_len: 57.329
+        Max length of line: 601
+        Min length of line: 2
+    train:
+        lines: 69216
+        avg_len: 57.052
+        Max length of line: 1410
+        Min length of line: 1
+DSTC7:
+    test_formatted:
+        seen: 
+            lines: 220049
+        unseen:
+            lines: 216367
+    test:
+        lines: 5588
+        avg_len: 79.565
+        Max length of line: 883
+        Min length of line: 0
+    train:
+        lines: 549002
+        avg_len: 73.9622
+        Max length of line: 2418
+        Min length of line: 0
