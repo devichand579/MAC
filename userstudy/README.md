@@ -70,7 +70,7 @@ A Flask-based web application for conducting user studies for TAC and MAC models
 
 - `app.py`: Main application file containing the Flask server and model implementations
 - `conv.py`: Contains conversation pools and utilities
-- `models/`: Directory containing model implementations
+- `models/`: Directory containing model implementations and utilities
 - `static/`: Frontend files (HTML, CSS, JavaScript)
 - `imagechat_samples/`: Sample data for image-based conversations
 
