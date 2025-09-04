@@ -1,8 +1,5 @@
 import pandas as pd
 
-
-
-
 class Event:
     timestamp: str
     event_type: str

@@ -144,7 +144,7 @@ class MiniCPM_Model(BaseModel):
         from swift.llm import PtEngine
         # Initialize the MiniCPM model with the checkpoint
         self.model_name = "openbmb/MiniCPM-V-2_6"
-        self.adapter_path = "/home//sm745052/swift/ckpts/MiniCPM-V-2_6_ck_92000"
+        self.adapter_path = "../ckpts/MiniCPM-V-2_6_ck_92000"
         self.engine = PtEngine(self.model_name, max_batch_size=1, adapters=[self.adapter_path], device_map='cuda:0')
         self.slow_model = True
 
@@ -339,7 +339,7 @@ def get_context():
                         item['image_path'] = image_file_path
                         # Store the first image path for the model
                         if not image_path:
-                            image_path = f"/home//sm745052/chatas-userstudy/imagechat_samples/images/{utterance['image_hash']}.jpg"
+                            image_path = f"./imagechat_samples/images/{utterance['image_hash']}.jpg"
                     else:
                         print(f"Warning: Image file not found: {image_file_path}")
                         # Try to find a matching image with a partial hash
@@ -350,7 +350,7 @@ def get_context():
                                     print(f"Found matching image with partial hash: {img_file}")
                                     item['image_path'] = f"imagechat_samples/images/{img_file}"
                                     if not image_path:
-                                        image_path = f"/home//sm745052/chatas-userstudy/imagechat_samples/images/{img_file}"
+                                        image_path = f"./imagechat_samples/images/{img_file}"
                                     break
                 
                 context.append(item)

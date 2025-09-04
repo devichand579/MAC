@@ -93,12 +93,6 @@ class QueryCompletionWithPerplexity:
 
 
 
-
-
-
-
-
-
 class QueryCompletion:
     def __init__(self):
         self.root = TrieNode()
