@@ -28,9 +28,7 @@ A Flask-based web application for conducting user studies for TAC and MAC models
 
 
 3. Prepare model checkpoints:
-   - Ensure the `ckpt` directory contains the necessary model files
-   - For MPC model: `ckpt/mpc_suff/main.mpc` and `ckpt/mpc_suff/suffix.mpc`
-   - For T5 model: Make sure the API endpoint is accessible
+   - Ensure the `ckpt` directory contains the necessary model files for Query Blazer (QB) and MPC models
 
 ## Running the Application
 
