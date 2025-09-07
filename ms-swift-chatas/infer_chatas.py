@@ -157,9 +157,9 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", default="image_chat",
                         choices=["image_chat", "mmdd"],
                         help="dataset to use")
-    parser.add_argument("--dataset_path", default="../anubhab/ParlAI/data/image_chat/test.csv",
+    parser.add_argument("--dataset_path", default="data/ImageChat/image_chat/test.csv",
                         help="dataset to use")
-    parser.add_argument("--image_dir", default="../anubhab/ParlAI/data/yfcc_images",
+    parser.add_argument("--image_dir", default="data/ImageChat/yfcc_images",
                         help="image directory")
     parser.add_argument("--split", type=int, default=None,
                         help="split number")

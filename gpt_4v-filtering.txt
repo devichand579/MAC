@@ -1,9 +1,3 @@
-string text = #dialog#;
-string dialog=text.Replace("\\n", "\n");
-return dialog;
-~CS
-----------------------------------------------------------------------------------------------------
-CONFIG:temperature:0.15|max_tokens:350|top_p:0.8|frequency_penalty:1|presence_penalty:1|auto_expand:false|token_list:|stop_list:|
 <|im_start|>system
 
 ## You are a discriminator model who will decide if the following hold:

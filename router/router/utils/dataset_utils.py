@@ -172,11 +172,11 @@ def get_dataset(dataset: DatasetType) -> DialogData:
         return test_data
     elif dataset == DatasetType.IMAGECHAT:
         test_data = ImageChatData(
-            path="/home/anubhab-pg/anubhab/ParlAI/data/image_chat/test.csv",
+            path="./data/image_chat/test.csv",
             to_filter=True,
             to_replace=True,
             image_path_by_url=create_image_path_by_url_image_chat(
-                "/home/anubhab-pg/anubhab/ParlAI/data/yfcc_images"
+                "./data/yfcc_images"
             ),
             to_unroll=True,
             min_images_per_dialog=1,
@@ -208,7 +208,7 @@ def get_combined_pred_by_idx(
     outfiles = []
     if dataset_type == DatasetType.MMDD:
         for model in Model:
-            outfile = f"../CHAT-AS-MULTIMODAL/outputs/san.all.{dataset_type.value}.{model.value}"
+            outfile = f"./outputs/san.all.{dataset_type.value}.{model.value}"
             if not os.path.exists(outfile):
                 logger.warning(
                     f"file {outfile} does not exist."
@@ -218,7 +218,7 @@ def get_combined_pred_by_idx(
             outfiles.append((outfile, model.value))
     else:
         for model in Model:
-            outfile = f"../CHAT-AS-MULTIMODAL/output_dgx/out.all.{dataset_type.value}.{model.value}"
+            outfile = f"./output_dgx/out.all.{dataset_type.value}.{model.value}"
             if not os.path.exists(outfile):
 
                 logger.warning(

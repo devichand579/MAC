@@ -7,7 +7,7 @@ from chatas.code.utils.dataset import Dialog
 
 class MiniCPMModel(BaseModel):
     
-    def __init__(self, nll_data_path: Optional[str] = "../sm745052/swift/output/logprobs.minicpm"):
+    def __init__(self, nll_data_path: Optional[str] = "./output/logprobs.minicpm"):
         """
         Initializes the MiniCPMModel instance.
         Sets the signal_keys to include 'idx', 'nll', 'first_token_lp'.
