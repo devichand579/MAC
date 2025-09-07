@@ -4,17 +4,21 @@ from typing import Any, Callable, Dict, Optional, Union
 import numpy as np
 from datasets import Dataset as HfDataset
 from torch.utils.data import Dataset
+import sys
 
 from swift.utils import get_logger
 from ..template import MaxLengthError
 from .preprocessor import RowPreprocessor
+
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from chatas.code.utils.dataset import (
     Dialog,
     DialogData,
     DialogCCData,
     # ImageChatData,
     MMDDData,
-    Utterance,
+    Utterance, 
     create_image_path_by_url,
     # create_image_path_by_url_image_chat,
     create_image_path_by_url_mmdd,
