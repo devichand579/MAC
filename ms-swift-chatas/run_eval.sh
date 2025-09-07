@@ -18,8 +18,6 @@ if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
   echo "  batch_size               - Inner batch size (default varies by model)"
   echo "  outer_batch_size         - Outer batch size (default varies by model)"
   echo "  dataset                  - Dataset to use (image_chat or mmdd, default: image_chat)"
-  echo "  dataset_path             - Path to dataset file (default: ../data/image_chat/test.csv)"
-  echo "  image_dir                - Path to image directory (default: ../data/yfcc_images)"
   echo "  split                    - Split number (default: None)"
   echo ""
   echo "Examples:"
@@ -33,9 +31,7 @@ MODEL_NAME="$1"
 BATCH_SIZE="${2:-16}"  # Default to 16 if not provided
 OUTER_BATCH="${3:-32}" # Default to 32 if not provided
 DATASET="${4:-image_chat}" # Default to image_chat if not provided
-DATASET_PATH="${5:-../data/ImageChat/image_chat/test.csv}" # Default path
-IMAGE_DIR="${6:-../data/ImageChat/yfcc_images}" # Default image directory
-SPLIT="${7:-0}" # Default to 0 if not provided
+SPLIT="${5:-None}" # Default to None if not provided
 
 case "$MODEL_NAME" in
   paligemma)
@@ -59,6 +55,8 @@ esac
 
 case "$DATASET" in
   image_chat)
+    DATASET_PATH="../data/ImageChat/image_chat/test.csv"
+    IMAGE_DIR="../data/ImageChat/yfcc_images"
     case "$MODEL_NAME" in
       paligemma) 
         OUTPUT_FILE="out.all.imagechat.paligemma2.3b.pt224"
@@ -78,7 +76,9 @@ case "$DATASET" in
         ;;
     esac
     ;;
-  mmdd)
+  mmdd) 
+    DATASET_PATH="../data/MMDD/test.csv"
+    IMAGE_DIR="../data/MMDD/images"
     case "$MODEL_NAME" in
       paligemma) 
         OUTPUT_FILE="out.all.mmdd.paligemma2.3b.pt224"
