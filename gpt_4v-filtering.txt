@@ -1,0 +1,71 @@
+string text = #dialog#;
+string dialog=text.Replace("\\n", "\n");
+return dialog;
+~CS
+----------------------------------------------------------------------------------------------------
+CONFIG:temperature:0.15|max_tokens:350|top_p:0.8|frequency_penalty:1|presence_penalty:1|auto_expand:false|token_list:|stop_list:|
+<|im_start|>system
+
+## You are a discriminator model who will decide if the following hold:
+1. The dialogue is relevant to the image.
+2. The image fits the context and is accounted for in the following utterances.
+3. The image & dialogue are coherent.
+4. The image can be used for autocompletion of following utterances.
+5. The image should not be the last utterance because it is of no use then.
+
+Provide a score between 1-5 and an explanation in JSON format.
+<|im_end|>
+<|im_start|>user
+
+Given the following dialogue starting from when the image was shared and including up to 3 subsequent utterances:
+
+#D1#
+
+Carefully assess how much the image contributes to the conversation. Think through the following questions step by step before assigning a score:
+
+Step-by-step Analysis:
+0. Provide a caption for the image (regardless of the conversation)
+
+1. Is the image misleading? Does it contradict or confuse the dialogue? 
+- If yes, rate it lower.
+
+2. Is the image completely ignored? Do the following messages continue without acknowledging it at all?
+- If yes, rate it low.
+
+3. Does the image add some relevance? Do the next messages mention something loosely connected to it, even if the dialogue still makes sense without it?
+- If yes, give a mid-range score.
+
+4. Is the image clearly useful? Do the messages directly reference the image, making the conversation easier to understand?
+- If yes, score it higher.
+
+5. Is the image essential? Would the dialogue be incomplete, confusing, or meaningless without it?
+- If yes, give the highest score.
+
+Your Task:
+
+Provide your response in valid JSON format:
+
+{
+  "caption": "<caption>",
+  "answer": <score between 1-5>,
+  "explanation": "<Step-by-step reasoning for the score>"
+}
+
+Scoring Scale:
+
+1 → The image contradicts or misleads the dialogue.
+
+2 → The image is ignored and not acknowledged at all.
+
+3 → The image is loosely relevant, but the dialogue makes sense without it.
+
+4 → The image adds context and is referenced, but isn’t crucial.
+
+5 → The image is critical, and the dialogue wouldn’t make sense without it.
+
+*Important: Justify your score with logical reasoning before assigning it.*
+
+
+Output all of these in <results></results> tag.
+<|im_end|>
+
