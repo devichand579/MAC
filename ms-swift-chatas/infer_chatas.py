@@ -1,9 +1,14 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 import os
+import sys
 from typing import List, Literal
 
 from tqdm import tqdm
 
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Now import from chatas directly
 from chatas.code.utils.dataset import (
     Dialog,
     MMDDData,
