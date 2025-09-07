@@ -31,7 +31,7 @@ MODEL_NAME="$1"
 BATCH_SIZE="${2:-16}"  # Default to 16 if not provided
 OUTER_BATCH="${3:-32}" # Default to 32 if not provided
 DATASET="${4:-image_chat}" # Default to image_chat if not provided
-SPLIT="${5:-None}" # Default to None if not provided
+SPLIT="${5:-0}" # Default to 0 if not provided
 
 case "$MODEL_NAME" in
   paligemma)

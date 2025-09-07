@@ -32,7 +32,8 @@ import torch
 OBS = 128         # outer-batch size
 BS = 64          # inner batch size
 OUTPUT_DIR = "output/"
-
+SPLIT = 0        # split number
+OUTPUT_FILE = "output.csv"  # default output file name
 
 NO_IMG = False
 
@@ -166,7 +167,7 @@ if __name__ == "__main__":
                         help="dataset to use")
     parser.add_argument("--image_dir", default="../data/ImageChat/yfcc_images",
                         help="image directory")
-    parser.add_argument("--split", type=int, default=None,
+    parser.add_argument("--split", type=int, default=0,
                         help="split number")
     args = parser.parse_args()
     
@@ -175,8 +176,12 @@ if __name__ == "__main__":
     OBS = args.outer_batch_size
     if args.model:        MODEL = args.model
     if args.adapter:      ADAPTER = args.adapter
-    if args.split:        SPLIT = args.split
-    if args.output_file:  OUTPUT_FILE = f"{args.output_file}_split_{SPLIT}"
+    if args.split is not None:  SPLIT = args.split
+    if args.output_file:
+        if SPLIT is not None:
+            OUTPUT_FILE = f"{args.output_file}_split_{SPLIT}"
+        else:
+            OUTPUT_FILE = args.output_file
     
     model = MODEL
     if model == "google/paligemma2-3b-pt-224":
