@@ -5,6 +5,7 @@ import numpy as np
 from datasets import Dataset as HfDataset
 from torch.utils.data import Dataset
 import sys
+import os
 
 from swift.utils import get_logger
 from ..template import MaxLengthError
