@@ -60,19 +60,19 @@ case "$DATASET" in
     case "$MODEL_NAME" in
       paligemma) 
         OUTPUT_FILE="out.all.imagechat.paligemma2.3b.pt224"
-        ADAPTER="../ckpts/ImageChat_ckpts/Paligemma"
+        ADAPTER="../ckpts/Imagechat_ckpts/Paligemma"
         ;;
       qwen) 
         OUTPUT_FILE="out.all.imagechat.qwen2.vl.2b.instruct"
-        ADAPTER="ckpts/ImageChat_ckpts/Qwen2_VL"
+        ADAPTER="../ckpts/Imagechat_ckpts/Qwen2_VL"
         ;;
       minicpm_i) 
         OUTPUT_FILE="out.all.imagechat.minicpm_image"
-        ADAPTER="ckpts/ImageChat_ckpts/MiniCPM_V"
+        ADAPTER="../ckpts/Imagechat_ckpts/MiniCPM_V"
         ;;
       minicpm_noimg) 
         OUTPUT_FILE="out.all.imagechat.minicpm_noimg"
-        ADAPTER="ckpts/ImageChat_ckpts/MiniCPM_no_img"
+        ADAPTER="../ckpts/Imagechat_ckpts/MiniCPM_no_img"
         ;;
     esac
     ;;
@@ -86,15 +86,15 @@ case "$DATASET" in
         ;;
       qwen) 
         OUTPUT_FILE="out.all.mmdd.qwen2.vl.2b.instruct"
-        ADAPTER="ckpts/MMDD_ckpts/Qwen2_VL"
+        ADAPTER="../ckpts/MMDD_ckpts/Qwen2_VL"
         ;;
       minicpm_i) 
         OUTPUT_FILE="out.all.mmdd.minicpm_image"
-        ADAPTER="ckpts/MMDD_ckpts/MiniCPM_V"
+        ADAPTER="../ckpts/MMDD_ckpts/MiniCPM_V"
         ;;
       minicpm_noimg) 
         OUTPUT_FILE="out.all.mmdd.minicpm_noimg"
-        ADAPTER="ckpts/MMDD_ckpts/MiniCPM_no_img"
+        ADAPTER="../ckpts/MMDD_ckpts/MiniCPM_no_img"
         ;;
     esac
     ;;
