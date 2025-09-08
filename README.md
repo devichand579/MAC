@@ -102,12 +102,12 @@ bash run_eval.sh paligemma
 bash run_eval.sh qwen 8 16
 ```
 
-3. Run MiniCPM with ImageChat dataset:
+3. Run MiniCPM-V with ImageChat dataset:
 ```bash
 bash run_eval.sh minicpm_i 8 16 image_chat 0
 ```
 
-4. Run MiniCPM with MMDD dataset:
+4. Run MiniCPM-V with MMDD dataset:
 ```bash
 bash run_eval.sh minicpm_i 8 16 mmdd 0
 ```
