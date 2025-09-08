@@ -496,12 +496,6 @@ def create_image_path_by_url(image_names_dir: str, images_dir: str) -> Dict[str,
     return image_path_by_url
 
 
-def create_image_path_by_url_photochat(images_dir: str) -> Dict[str, str]:
-    image_path_by_url = {}
-    for f in filter(lambda x: x.endswith(".jpg"), os.listdir(images_dir)):
-        image_path_by_url[f.split(".")[0]] = os.path.join(images_dir, f)
-    return image_path_by_url
-
 def create_image_path_by_url_image_chat(
     images_dir: str
 ) -> Dict[str, str]:
