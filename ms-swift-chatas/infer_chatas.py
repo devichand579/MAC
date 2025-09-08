@@ -29,11 +29,11 @@ import torch
 
 
 # Defaults; can be overridden by CLI flags
-OBS = 128         # outer-batch size
-BS = 64          # inner batch size
-OUTPUT_DIR = "output/"
-SPLIT = 0        # split number
-OUTPUT_FILE = "output.csv"  # default output file name
+OBS = 128         
+BS = 64          
+OUTPUT_DIR = "../output/"
+SPLIT = 0       
+OUTPUT_FILE = "output.csv"  
 
 NO_IMG = False
 
