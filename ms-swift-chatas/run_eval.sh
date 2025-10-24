@@ -7,7 +7,7 @@ set -e
 
 # Show usage if no arguments or help flag
 if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
-  echo "Usage: $0 <model_name> [batch_size] [outer_batch_size] [dataset] [dataset_path] [image_dir]"
+  echo "Usage: $0 <model_name> [batch_size] [outer_batch_size] [dataset] [split] [--resume]"
   echo ""
   echo "Models:"
   echo "  paligemma                - PaliGemma 2 3B PT-224"
@@ -18,12 +18,13 @@ if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
   echo "  batch_size               - Inner batch size (default varies by model)"
   echo "  outer_batch_size         - Outer batch size (default varies by model)"
   echo "  dataset                  - Dataset to use (image_chat or mmdd, default: image_chat)"
-  echo "  split                    - Split number (default: None)"
+  echo "  split                    - Split number (default: 0)"
+  echo "  --resume                 - Resume from existing output file (optional flag)"
   echo ""
   echo "Examples:"
   echo "  bash $0 paligemma         # Run PaliGemma with default settings"
   echo "  bash $0 qwen 16 4         # Run Qwen with batch_size=16, outer_batch_size=4"
-  echo "  bash $0 minicpm_i 8 16 image_chat /path/to/dataset.csv /path/to/images  # Run MiniCPM with imagechat dataset"
+  echo "  bash $0 minicpm_i 8 16 image_chat 0 --resume  # Run MiniCPM with resume flag"
   exit 1
 fi
 
@@ -32,6 +33,15 @@ BATCH_SIZE="${2:-16}"  # Default to 16 if not provided
 OUTER_BATCH="${3:-32}" # Default to 32 if not provided
 DATASET="${4:-image_chat}" # Default to image_chat if not provided
 SPLIT="${5:-0}" # Default to 0 if not provided
+
+# Check if --resume flag is provided
+RESUME_FLAG=""
+for arg in "$@"; do
+  if [[ "$arg" == "--resume" ]]; then
+    RESUME_FLAG="--resume"
+    break
+  fi
+done
 
 case "$MODEL_NAME" in
   paligemma)
@@ -115,6 +125,7 @@ echo "  Dataset:         $DATASET"
 echo "  Dataset path:    $DATASET_PATH"
 echo "  Image directory: $IMAGE_DIR"
 echo "  Split:           $SPLIT"
+echo "  Resume:          $([ -n "$RESUME_FLAG" ] && echo "True" || echo "False")"
 echo ""
 
 
@@ -132,4 +143,5 @@ python infer_chatas.py \
   --dataset "$DATASET" \
   --dataset_path "$DATASET_PATH" \
   --image_dir "$IMAGE_DIR" \
-  --split "$SPLIT"
+  --split "$SPLIT" \
+  $RESUME_FLAG
