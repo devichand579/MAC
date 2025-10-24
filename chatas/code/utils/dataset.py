@@ -418,7 +418,7 @@ class ImageChatData(DialogData):
         return path.split("/")[-1].split(".")[0][:2]
 
     def parse_raw_file(self) -> List[Dialog]:
-        """
+        """ 
         Parses the raw dataset file and returns a list of Dialog objects.
         """
         assert isinstance(self.path, str), "Path must be a string"

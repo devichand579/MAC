@@ -187,7 +187,7 @@ if __name__ == "__main__":
     if model == "google/paligemma2-3b-pt-224":
         torch._dynamo.config.disable = True 
     adapter = ADAPTER
-    engine = PtEngine(model, max_batch_size=BS, adapters=[adapter],device_map="auto")
+    engine = PtEngine(model, max_batch_size=BS, adapters=[adapter],device_map="cuda:1")
     dataset = get_data(args.image_dir, args.dataset_path, args.dataset)
     if args.resume:
         # Read existing file to get the last idx
