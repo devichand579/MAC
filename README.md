@@ -9,6 +9,8 @@ MAC/
 ├── chatas/              # Evaluation metrics and datasets handling utilities
 ├── ms-swift-chatas/     # Swift integration for model evaluation and training
 ├── TAC_models/          # Model implementations for text auto-completion models
+├── imagechat_outputs/   # Outputs for imagechat dataset
+├── mmdd_outputs/        # Outputs for mmdd dataset
 ├── router/              # Router Implementation for model selection between TAC and MAC model
 ├── userstudy/           # User study web application for TAC and MAC models
 ├── ckpts/               # Model checkpoints (to be created)
@@ -111,6 +113,8 @@ bash run_eval.sh minicpm_i 8 16 image_chat 0
 ```bash
 bash run_eval.sh minicpm_i 8 16 mmdd 0
 ```
+
+NOTE: If you find any module mismatch errors, while loading the checpoints, please update the adapter config file in the checkpoints directory or have a compatible version of the swift framework.
 
 ### Output
 
