@@ -84,20 +84,20 @@ swift sft \
 # MODEL_TYPE="minicpmv2_6"
 # MODEL_PATH="openbmb/MiniCPM-V-2_6"
 # DATASET_TYPE="imgchat"
-# DATASET_DIR="../../anubhab/ParlAI/data/image_chat/"
-# IMAGE_DIR="../../anubhab/ParlAI/data/yfcc_images/"
+# DATASET_DIR="../data/ImageChat/image_chat/"
+# IMAGE_DIR="../data/ImageChat/yfcc_images/"
 # NO_IMG_FLAG="--no_img"  # Uncomment to train without images
 #
 # Example 2: Training PaLI-Gemma on MMDD dataset
 # MODEL_TYPE="paligemma"
 # MODEL_PATH="google/paligemma2-3b-pt-224"
 # DATASET_TYPE="mmdd"
-# DATASET_DIR="../data/MMDD/"
+# DATASET_DIR="../data/MMDD/test.csv"
 # IMAGE_DIR="../data/MMDD/images/"
 #
 # Example 3: Training Qwen2-VL on ImageChat dataset
 # MODEL_TYPE="qwen2_vl"
 # MODEL_PATH="qwen/Qwen2-VL-2B-Instruct"
 # DATASET_TYPE="imgchat"
-# DATASET_DIR="../data/image_chat/"
-# IMAGE_DIR="../data/yfcc_images/"
+# DATASET_DIR="../data/ImageChat/image_chat/test.csv"
+# IMAGE_DIR="../data/ImageChat/yfcc_images/"

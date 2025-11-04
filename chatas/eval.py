@@ -336,115 +336,56 @@ class EvalDialogData:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, required=True, help="its the outfile")
+    parser.add_argument("--input", type=str, required=True, help="output file path of the predictions")
+    parser.add_argument("--dataset", type=str, required=True, help="dataset name", choices=["image_chat", "mmdd"])
     parser.add_argument(
         "--data_path",
         type=str,
-        default="data/MMDD/test.csv",
-        help="data/Im/test.csv",
+        default=None,
+        help="file path of the test.csv file for the dataset",
     )
     parser.add_argument(
         "--intersection_path",
         type=str,
         default=None,
-        help="data/MMDD/intersection.json",
+        help="intewrsection file path",
     )
-    parser.add_argument(
-        "--jai",
-        action="store_true",
-        help="use just after image data",
-    )
-    parser.add_argument("--sample", action="store_true", help="use sample data")
-    parser.add_argument(
-        "--compare_input",
-        type=str,
-        default=None,
-        help="compare with anothwer dataset using the intersection of the dialogs for which preds are there",
-    )
-    # parser.add_argument(
-    #     "--output", type=str, required=True, help="its the desired csv file"
-    # )
+        
     args = parser.parse_args()
     preds = pd.read_csv(args.input)
-    # print(df.head(5))
-    TEST_CONFIG["to_split"] = False
-    if args.sample:
-        TEST_CONFIG["n_samples"] = 20
-    ## ADHOC CODE
-    test_data = ImageChatData(
-        path="data/image_chat/test.csv",
-        to_filter=True,
-        to_replace=False,
-        image_path_by_url=create_image_path_by_url_image_chat("data/yfcc_images"),
-        to_unroll=True,
-        min_images_per_dialog=1,
-        n_samples=4800,
-        to_split=False,
-    )
 
-    # test_data = MMDDData(
-    #     args.data_path,
-    #     image_path_by_url=create_image_path_by_url_mmdd("data/MMDD/images"),
-    #     **TEST_CONFIG,
-    # )
+    if args.dataset == "image_chat":
+        test_data = ImageChatData(
+            path=args.data_path,
+            to_filter=True,
+            to_replace=False,
+            image_path_by_url=create_image_path_by_url_image_chat("data/ImageChat/yfcc_images"),
+            to_unroll=True,
+            min_images_per_dialog=1,
+            n_samples=4800,
+            to_split=False,
+        )
+    elif args.dataset == "mmdd":
+        TEST_CONFIG["to_split"] = False
+        test_data = MMDDData(
+            path=args.data_path,
+            image_path_by_url=create_image_path_by_url_mmdd("data/MMDD/images"),
+            **TEST_CONFIG,
+        )
+    else:
+        raise ValueError(f"Dataset {args.dataset} not supported")
+
     eval_data = EvalDialogData(test_data, preds)
-    if args.compare_input:
-        compare_preds = pd.read_csv(args.compare_input)
-        compare_eval_data = EvalDialogData(test_data, compare_preds)
-        test_dialog_idxs = set(eval_data.dialogs_by_id.keys())
-        compare_dialog_idxs = set(compare_eval_data.dialogs_by_id.keys())
-        intersection = test_dialog_idxs.intersection(compare_dialog_idxs)
-        print(
-            f"Intersection of dialog idxs for comparision: {len(intersection)} out of {len(test_dialog_idxs)} and {len(compare_dialog_idxs)}"
-        )
-        compare_eval_data = compare_eval_data.prune(
-            lambda eval_dialog: eval_dialog.idx in intersection
-        )
-        eval_data = eval_data.prune(
-            lambda eval_dialog: eval_dialog.idx in intersection
-        )
-
-
-    if args.jai:
-        eval_data = eval_data.prune(
-            lambda eval_dialog: (True if eval_dialog.dialog[-1].images else False)
-        )
-        compare_eval_data = compare_eval_data.prune(
-            lambda eval_dialog: (True if eval_dialog.dialog[-1].images else False)
-        )
 
     if args.intersection_path:
         with open(args.intersection_path, "r") as f:
             intersection = json.load(f)["test_key"]
-        # print(intersection)
         seen, unseen = eval_data.seen_unseen_split(intersection)
-        if args.compare_input:
-            compare_seen, compare_unseen = compare_eval_data.seen_unseen_split(
-                intersection
-            )
-            print("Comparing seen data")
-            seen_metrics = seen.compute()
-            compare_seen_metrics = compare_seen.compute()
-            print("Seen metrics:", seen_metrics)
-            print("Compare Seen metrics:", compare_seen_metrics)
-            print("Comparing unseen data")
-            unseen_metrics = unseen.compute()
-            compare_unseen_metrics = compare_unseen.compute()
-            print("Unseen metrics:", unseen_metrics)
-            print("Compare Unseen metrics:", compare_unseen_metrics)
-        else:
-            print("Calculating seen/unseen...")
-            seen_metrics = seen.compute()
-            unseen_metrics = unseen.compute()
-            print("Seen metrics:", seen_metrics)
-            print("Unseen metrics:", unseen_metrics)
-
-    if args.compare_input:
-        print("Comparing all data")
-        metrics = eval_data.compute()
-        compare_metrics = compare_eval_data.compute()
-        print("ALL Metrics:", metrics)
-        print("Compare ALL Metrics:", compare_metrics)
-    else:
+        
+        print("Calculating seen/unseen...")
+        seen_metrics = seen.compute()
+        unseen_metrics = unseen.compute()
+        print("Seen metrics:", seen_metrics)
+        print("Unseen metrics:", unseen_metrics)
         metrics = eval_data.compute()
         print("ALL Metrics:", metrics)

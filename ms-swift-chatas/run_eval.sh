@@ -134,7 +134,6 @@ source "$HOME/miniconda3/etc/profile.d/conda.sh"
 conda activate MAC
 
 python infer_chatas.py \
-  --resume\
   --model "$MODEL" \
   --adapter "$ADAPTER" \
   --output_file "$OUTPUT_FILE" \

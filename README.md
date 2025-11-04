@@ -64,6 +64,21 @@ Download checkpoints and filtered datasets from here. Create the following direc
         └── yfcc_images
 
 ```
+
+## Finetuning multimodal models for Multimodal Auto-Completion
+
+Navigate to the ms-swift-chatas directory and use the `template_training.sh` script to finetune the models:
+
+```bash
+cd ms-swift-chatas
+```
+Go through the `template_training.sh` script and fill in the required parameters for finetuning the models.
+
+## Training text auto-completion models for Multimodal Auto-Completion
+
+Navigate to the TAC_models directory and go through the respective README.md files of MPC and QB for training the text auto-completion models.
+
+
 ## Running inference for Multimodal Auto-Completion 
 
 Navigate to the ms-swift-chatas directory and use the `run_eval.sh` script to run evaluations:
@@ -114,8 +129,39 @@ bash run_eval.sh minicpm_i 8 16 image_chat 0
 bash run_eval.sh minicpm_i 8 16 mmdd 0
 ```
 
-NOTE: If you find any module mismatch errors, while loading the checpoints, please update the adapter config file in the checkpoints directory or have a compatible version of the swift framework.
+NOTE: If you find any module name mismatch errors while loading the checkpoints, please update the adapter config file in the checkpoints directory or have a compatible version of the swift framework.
 
 ### Output
 
 Evaluation results will be saved in the `/output/` directory at root with filenames based on the model, dataset and split number used.
+
+
+## Computations of evaluation metrics for Multimodal Auto-Completion
+
+### Creating intersection of dialogs for the datasets for comparison of results on seen and unseen data
+ 
+ ```bash
+ python chatas/code/utils/dataset.py
+ ```
+
+ After running this command, you will have the intersection of dialogs for the datasets in the following files:
+ ```
+ data/ImageChat/intersection_imagechat.json
+ data/MMDD/intersection_mmdd.json
+ ```
+
+## Computing metrics 
+
+```bash
+python chatas/eval.py --input <output_file_path> --dataset <dataset_name> --data_path <data_file_path> --intersection_path <intersection_file_path>
+```  
+
+Example for ImageChat dataset:
+```bash
+python chatas/eval.py --input imagechat_outputs/imagechat.minicpm_image.csv --dataset image_chat --data_path data/ImageChat/image_chat/test.csv --intersection_path data/ImageChat/intersection_imagechat.json
+```
+
+Example for MMDD dataset:
+```bash
+python chatas/eval.py --input mmdd_outputs/mmdd.minicpm_image.csv --dataset mmdd --data_path data/MMDD/test.csv --intersection_path data/MMDD/intersection_mmdd.json
+```

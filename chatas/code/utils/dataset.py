@@ -554,10 +554,10 @@ def intersection(
     return (repeated1, repeated2)
 
 
-def update_intersection():
+def update_intersection_imagechat():
     test_data = ImageChatData(
-        path="data/image_chat/test.csv",
-        image_path_by_url=create_image_path_by_url_image_chat("data/yfcc_images"),
+        path="data/ImageChat/image_chat/test.csv",
+        image_path_by_url=create_image_path_by_url_image_chat("data/ImageChat/yfcc_images"),
         to_filter=True,
         to_replace=True,
         to_unroll=True,
@@ -566,8 +566,8 @@ def update_intersection():
         to_split=False,
     )
     train_data = ImageChatData(
-        path="data/image_chat/train.csv",
-        image_path_by_url=create_image_path_by_url_image_chat("data/yfcc_images"),
+        path="data/ImageChat/image_chat/train.csv",
+        image_path_by_url=create_image_path_by_url_image_chat("data/ImageChat/yfcc_images"),
         to_filter=True,
         to_replace=True,
         to_unroll=True,
@@ -577,7 +577,7 @@ def update_intersection():
     )
     print("Calculating Intersection:")
     repeated_data = intersection(train_data, test_data)
-    with open("data/ImageChat/intersection_san.json", "w") as f:
+    with open("data/ImageChat/intersection_imagechat.json", "w") as f:
         json.dump({"train_key": repeated_data[0], "test_key": repeated_data[1]}, f)
 
 
@@ -604,7 +604,7 @@ def update_intersection_mmdd():
     )
     print("Calculating Intersection:")
     repeated_data = intersection(train_data, test_data)
-    with open("data/MMDD/intersection_san.json", "w") as f:
+    with open("data/MMDD/intersection_mmdd.json", "w") as f:
         json.dump({"train_key": repeated_data[0], "test_key": repeated_data[1]}, f)
 
 
@@ -637,3 +637,8 @@ def update_train_txt(train_data: DialogData, filename: str):
         sents.append(dialog.response.text.lower())
     with open(f"data/ImageChat/{filename}", "w") as f:
         f.write("\n".join(sents))
+
+if __name__ == "__main__":
+    update_intersection_imagechat()
+    update_intersection_mmdd()
+    
