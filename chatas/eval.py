@@ -7,7 +7,7 @@ from tqdm import tqdm
 import json
 import sys
 sys.path.append(".")
-from code.utils.dataset import (
+from chatas.code.utils.dataset import (
     TEST_CONFIG,
     DialogData,
     Dialog,
@@ -16,7 +16,7 @@ from code.utils.dataset import (
     create_image_path_by_url_mmdd,
     create_image_path_by_url_image_chat,
 )
-from code.utils.misc import longest_Common_Prefix
+from chatas.code.utils.misc import longest_Common_Prefix
 from copy import deepcopy
 import logging
 

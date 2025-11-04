@@ -74,9 +74,9 @@ cd ms-swift-chatas
 ```
 Go through the `template_training.sh` script and fill in the required parameters for finetuning the models.
 
-## Training text auto-completion models for Multimodal Auto-Completion
+## Training and inference for text auto-completion models for Multimodal Auto-Completion
 
-Navigate to the TAC_models directory and go through the respective README.md files of MPC and QB for training the text auto-completion models.
+Navigate to the TAC_models directory and go through the respective README.md files of MPC and QB for training and inference of text auto-completion models.
 
 
 ## Running inference for Multimodal Auto-Completion 
