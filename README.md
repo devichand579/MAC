@@ -243,3 +243,7 @@ mlp_classifier_<dataset_name>.pth
 mlp_label_encoder_<dataset_name>.pkl
 ```
 This will print all the scores for the router framework with and without cost-weighted loss.
+
+## User Study for Multimodal Auto-Completion
+
+Navigate to the userstudy directory and read the `README.md` file to run the user study.

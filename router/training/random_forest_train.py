@@ -145,6 +145,14 @@ def train_random_forest_model(data_path: str, target_column: str, dataset_type: 
     model_label_map = dict(zip(le.classes_, range(len(le.classes_))))
     rev_model_label_map = {v: k for k, v in model_label_map.items()}  # Reverse mapping
     print(f"label mapping: {model_label_map}")
+    
+    # Define cost mapping (avg time per sample in seconds)
+    cost_mapping = {
+        'paligemma': 1.4802,
+        'qwen2.vl.2b.instruct': 0.7338,
+        'minicpm_image': 2.0891,
+        'qb': 0.00094
+    }
 
     dataset = get_dataset(dataset_type)
     combined_pred_by_idx_filename = f"combined_pred_by_idx_{dataset_type.value}.json"
@@ -154,7 +162,48 @@ def train_random_forest_model(data_path: str, target_column: str, dataset_type: 
     y_pred_df['idx'] = X_test.index
     y_test_df['idx'] = X_test.index
     y_pred_df[target_column] = y_pred_df[target_column].map(lambda x: rev_model_label_map.get(x, x))  # Map predictions back to original labels
-    print(y_pred_df[target_column].value_counts())
+    pred_counts = y_pred_df[target_column].value_counts()
+    print(f"\nPredicted model distribution:")
+    print(pred_counts)
+    
+    # Calculate final time cost based on prediction fractions
+    total_test_samples = len(y_pred_df)
+    final_time_per_sample = 0.0
+    total_time = 0.0
+    
+    print(f"\nCost analysis for test set:")
+    print(f"{'Model':<30} {'Count':<10} {'Fraction':<12} {'Cost (s/sample)':<18} {'Fraction×Cost':<15} {'Total Time (s)':<15}")
+    print("-" * 100)
+    
+    for model_name in pred_counts.index:
+        count = pred_counts[model_name]
+        fraction = count / total_test_samples
+        # Get cost for this model (normalize name to match cost_mapping keys)
+        model_name_normalized = model_name.lower().strip()
+        if model_name_normalized in cost_mapping:
+            cost = cost_mapping[model_name_normalized]
+        else:
+            # Default cost if not found
+            default_cost = sum(cost_mapping.values()) / len(cost_mapping)
+            cost = default_cost
+            logger.warning(f"Model '{model_name}' not found in cost_mapping. Using default cost: {default_cost}")
+        
+        fraction_times_cost = fraction * cost
+        model_total_time = count * cost
+        final_time_per_sample += fraction_times_cost
+        total_time += model_total_time
+        
+        print(f"{model_name:<30} {count:<10} {fraction:<12.4f} {cost:<18.4f} {fraction_times_cost:<15.4f} {model_total_time:<15.4f}")
+    
+    print("-" * 100)
+    print(f"{'SUM (Average Time per Sample)':<30} {'-':<10} {'-':<12} {'-':<18} {final_time_per_sample:<15.4f} {'-':<15}")
+    print(f"{'Total Time for Test Set':<30} {'-':<10} {'-':<12} {'-':<18} {'-':<15} {total_time:<15.4f}")
+    print(f"\nFinal average time per sample (sum of fraction × cost): {final_time_per_sample:.4f} seconds")
+    print(f"Total time for test set ({total_test_samples} samples): {total_time:.4f} seconds")
+    
+    logger.info(f"Final average time per sample: {final_time_per_sample:.4f} seconds")
+    logger.info(f"Total time for test set: {total_time:.4f} seconds")
+    
     y_test_df[target_column] = y_test_df[target_column].map(lambda x: rev_model_label_map.get(x, x))  # Map test labels back to original labels
     for model_name, label in model_label_map.items():
         print(f"If only {model_name} is used")
