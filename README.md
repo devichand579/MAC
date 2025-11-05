@@ -15,6 +15,7 @@ MAC/
 ├── userstudy/           # User study web application for TAC and MAC models
 ├── ckpts/               # Model checkpoints (to be created)
 ├── data/                # Datasets (to be created)
+|-- QB_ckpts/            # QB model checkpoints
 └── environment.yaml     # Conda environment configuration
 ├── gpt_4v-filtering.txt # Filtering script for GPT-4V
 ├── README.md            # This README file
@@ -150,7 +151,7 @@ Evaluation results will be saved in the `/output/` directory at root with filena
  data/MMDD/intersection_mmdd.json
  ```
 
-## Computing metrics 
+### Computing metrics 
 
 ```bash
 python chatas/eval.py --input <output_file_path> --dataset <dataset_name> --data_path <data_file_path> --intersection_path <intersection_file_path>
@@ -165,3 +166,80 @@ Example for MMDD dataset:
 ```bash
 python chatas/eval.py --input mmdd_outputs/mmdd.minicpm_image.csv --dataset mmdd --data_path data/MMDD/test.csv --intersection_path data/MMDD/intersection_mmdd.json
 ```
+
+## Router Framework for Multimodal Auto-Completion
+
+### Random Forest Classifier for Multimodal Auto-Completion
+
+1. Creating the master dataset for training the router framework, Configure the models neeeded in `router/models/main.py` so that labels are generated for the models accordingly.
+```bash
+python router/utils/dataset_utils.py --dataset <dataset_name>
+```
+This will create two files in the root directory:
+```
+combined_pred_by_idx_<dataset_name>.json
+master_dataset_<dataset_name>.csv
+```
+2. Creating the master dataset of features for training the router framework
+```bash
+python router/utils/create_train.py --master_dataset_path <master_dataset_path> --dataset <dataset_name> --run_models --combine_outputs
+```
+This will create files in the root directory:
+```
+master_dataset_<model_name>.csv
+master_dataset_combined_<dataset_name>.csv
+```
+
+3. Training the router framework
+```bash
+python router/training/random_forest_train.py --data_path <data_path> --dataset <dataset_name>
+```
+This will create a file in the root directory:
+```
+random_forest_model.pkl
+label_encoders.pkl
+```
+This will print all the scores for the router framework.
+
+### Neural Classifier for Multimodal Auto-Completion
+
+1. Creating the master dataset for training the router framework, Configure the models neeeded in `router/models/main.py` so that labels are generated for the models accordingly.
+```bash
+python router/utils/dataset_utils.py --dataset <dataset_name>
+```
+This will create two files in the root directory:
+```
+combined_pred_by_idx_<dataset_name>.json
+master_dataset_<dataset_name>.csv
+```
+
+2. Creating the master dataset of features for training the router framework
+```bash
+python router/utils/create_latent_train.py --master_dataset_path <master_dataset_path> --model_name <model_name>
+```
+This will create files in the root directory:
+```
+master_dataset_<dataset_name>_embeddings.npy
+master_dataset_<dataset_name>_embedding_mapping.csv
+```
+
+3. Fethcing the clock times for inference of the models
+```bash
+cd ms-swift-chatas
+python benchmark_inference.py --use_vllm
+```
+This will create a file in the root directory:
+```
+benchmark_results.json
+```
+
+3. Training the router framework
+```bash
+python router/training/neural_classifier.py --dataset <dataset_name>  --use_cost_loss --lambda <lambda_weight>
+```
+Use the last two flags to enable cost-weighted loss and set the lambda weight for the loss. This will create a file in the root directory:
+```
+mlp_classifier_<dataset_name>.pth
+mlp_label_encoder_<dataset_name>.pkl
+```
+This will print all the scores for the router framework with and without cost-weighted loss.

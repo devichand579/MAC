@@ -3,10 +3,10 @@ sys.path.append(".")
 from router.utils.modelling_utils import BaseModel
 from chatas.code.utils.dataset import Dialog, Utterance
 from queryblazer import QueryBlazer, Config # type: ignore
-
+import argparse
 
 class Args:
-    def __init__(self, ckpt_dir: str = 'ckpts/qb/QB_MMDD/'):
+    def __init__(self, ckpt_dir: str = 'QB_ckpts/QB_MMDD'):
         # Output Files (will overwrite)
         if not ckpt_dir.endswith('/'):
             ckpt_dir += '/'
@@ -31,13 +31,13 @@ class Args:
 
 
 class QueryBlazerModel(BaseModel):
-    def __init__(self):
+    def __init__(self, ckpt_dir: str = 'QB_ckpts/QB_MMDD'):
         """
         Initializes the QueryBlazerModel instance.
         Sets the signal_keys to include 'idx', 'prefix_chars', 'num_previous_utterance', and 'num_utterance_after_img'.
         """
         self.signal_keys = ['idx', 'qb_nll']
-        self.args = Args()
+        self.args = Args(ckpt_dir=ckpt_dir)
         self.qb = QueryBlazer(encoder=self.args.ENCODER,
                               model=self.args.LANGUAGE_MODEL,
                               config=Config(
@@ -67,7 +67,10 @@ class QueryBlazerModel(BaseModel):
         }
         
 if __name__ == "__main__":
-    model = QueryBlazerModel()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ckpt_dir', type=str, default='QB_ckpts/QB_MMDD')
+    args = parser.parse_args()
+    model = QueryBlazerModel(ckpt_dir=args.ckpt_dir)
     dialog = Dialog(idx="he__u2__s2", utterances = [Utterance(text="Hello", images=[]),
                                                     Utterance(text="How are you?", images=["image1.jpg"]),
                                                     Utterance(text="Ch", images=[])])

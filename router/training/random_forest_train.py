@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import LabelEncoder
 import logging
 import joblib
+import argparse
 
 from router.utils.dataset_utils import DatasetType, get_combined_score, get_dataset, partial_f1
 from router.utils.modelling_utils import load_combined_pred_by_idx # Moved import to the top
@@ -146,7 +147,8 @@ def train_random_forest_model(data_path: str, target_column: str, dataset_type: 
     print(f"label mapping: {model_label_map}")
 
     dataset = get_dataset(dataset_type)
-    combined_pred_by_idx = load_combined_pred_by_idx()
+    combined_pred_by_idx_filename = f"combined_pred_by_idx_{dataset_type.value}.json"
+    combined_pred_by_idx = load_combined_pred_by_idx(combined_pred_by_idx_filename)
     y_pred_df = pd.DataFrame(list(y_pred), columns=[target_column])
     y_test_df = pd.DataFrame(y_test, columns=[target_column])
     y_pred_df['idx'] = X_test.index
@@ -167,10 +169,20 @@ def train_random_forest_model(data_path: str, target_column: str, dataset_type: 
     return model, label_encoders
 
 if __name__ == '__main__':
-    data_path = 'master_dataset_combined.csv'  # Replace with your dataset path
-    target_column = 'model'  # Replace with your target column name
-    
-    trained_model, encoders = train_random_forest_model(data_path, target_column, DatasetType.MMDD)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_path', type=str, default='master_dataset_combined.csv')
+    parser.add_argument('--dataset', type=str, default='mmdd', choices=['mmdd', 'image_chat'])
+    args = parser.parse_args()
+    data_path = args.data_path
+    target_column = 'model'
+    dataset = args.dataset
+    if dataset == "mmdd":
+        dataset = DatasetType.MMDD
+    elif dataset == "image_chat":
+        dataset = DatasetType.IMAGECHAT
+    else:
+        raise ValueError(f"Invalid dataset: {dataset}")
+    trained_model, encoders = train_random_forest_model(data_path, target_column, dataset)
     
     if trained_model and encoders:
         # Save the model and label encoders if needed

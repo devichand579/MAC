@@ -24,6 +24,142 @@ try:
     # After setting the environment variables, import vllm. This way of writing allows lint to pass.
     os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'
     os.environ['VLLM_ENGINE_ITERATION_TIMEOUT_S'] = '3600'
+    # Try to disable flash attention for vision encoder to avoid device placement issues
+    if 'VLLM_USE_FLASH_ATTN' not in os.environ:
+        os.environ['VLLM_USE_FLASH_ATTN'] = '0'
+    if 'DISABLE_FLASH_ATTN' not in os.environ:
+        os.environ['DISABLE_FLASH_ATTN'] = '1'
+    
+    # Patch flash_attn to fix cu_seqlens_q device placement issue before importing vLLM
+    try:
+        import flash_attn
+        import torch
+        
+        # Patch the main function
+        original_flash_attn_varlen_func = flash_attn.flash_attn_interface.flash_attn_varlen_func
+        
+        def patched_flash_attn_varlen_func(*args, **kwargs):
+            # Ensure cu_seqlens_q and cu_seqlens_k are on CUDA
+            # Handle both positional and keyword arguments
+            args_list = list(args)
+            
+            # cu_seqlens_q is typically the 4th positional argument (q, k, v, cu_seqlens_q, ...)
+            # But it could also be passed as a keyword argument
+            if len(args_list) >= 4:
+                cu_seqlens_q = args_list[3]
+                if cu_seqlens_q is not None:
+                    # Check if it's a tensor and move to CUDA if needed
+                    if isinstance(cu_seqlens_q, torch.Tensor) and not cu_seqlens_q.is_cuda:
+                        args_list[3] = cu_seqlens_q.cuda()
+                    # Also check if q is on CUDA to determine device
+                    elif len(args_list) > 0 and isinstance(args_list[0], torch.Tensor) and args_list[0].is_cuda:
+                        if not isinstance(cu_seqlens_q, torch.Tensor):
+                            # If it's not a tensor, try to convert it
+                            args_list[3] = torch.tensor(cu_seqlens_q, device=args_list[0].device, dtype=torch.int32)
+                        elif cu_seqlens_q.device != args_list[0].device:
+                            args_list[3] = cu_seqlens_q.to(args_list[0].device)
+            
+            if len(args_list) >= 5:
+                cu_seqlens_k = args_list[4]
+                if cu_seqlens_k is not None:
+                    if isinstance(cu_seqlens_k, torch.Tensor) and not cu_seqlens_k.is_cuda:
+                        args_list[4] = cu_seqlens_k.cuda()
+                    elif len(args_list) > 0 and isinstance(args_list[0], torch.Tensor) and args_list[0].is_cuda:
+                        if not isinstance(cu_seqlens_k, torch.Tensor):
+                            args_list[4] = torch.tensor(cu_seqlens_k, device=args_list[0].device, dtype=torch.int32)
+                        elif cu_seqlens_k.device != args_list[0].device:
+                            args_list[4] = cu_seqlens_k.to(args_list[0].device)
+            
+            # Also check kwargs
+            if 'cu_seqlens_q' in kwargs:
+                cu_seqlens_q = kwargs['cu_seqlens_q']
+                if cu_seqlens_q is not None:
+                    if isinstance(cu_seqlens_q, torch.Tensor) and not cu_seqlens_q.is_cuda:
+                        kwargs['cu_seqlens_q'] = cu_seqlens_q.cuda()
+                    elif len(args_list) > 0 and isinstance(args_list[0], torch.Tensor) and args_list[0].is_cuda:
+                        if not isinstance(cu_seqlens_q, torch.Tensor):
+                            kwargs['cu_seqlens_q'] = torch.tensor(cu_seqlens_q, device=args_list[0].device, dtype=torch.int32)
+                        elif cu_seqlens_q.device != args_list[0].device:
+                            kwargs['cu_seqlens_q'] = cu_seqlens_q.to(args_list[0].device)
+            
+            if 'cu_seqlens_k' in kwargs:
+                cu_seqlens_k = kwargs['cu_seqlens_k']
+                if cu_seqlens_k is not None:
+                    if isinstance(cu_seqlens_k, torch.Tensor) and not cu_seqlens_k.is_cuda:
+                        kwargs['cu_seqlens_k'] = cu_seqlens_k.cuda()
+                    elif len(args_list) > 0 and isinstance(args_list[0], torch.Tensor) and args_list[0].is_cuda:
+                        if not isinstance(cu_seqlens_k, torch.Tensor):
+                            kwargs['cu_seqlens_k'] = torch.tensor(cu_seqlens_k, device=args_list[0].device, dtype=torch.int32)
+                        elif cu_seqlens_k.device != args_list[0].device:
+                            kwargs['cu_seqlens_k'] = cu_seqlens_k.to(args_list[0].device)
+            
+            return original_flash_attn_varlen_func(*args_list, **kwargs)
+        
+        flash_attn.flash_attn_interface.flash_attn_varlen_func = patched_flash_attn_varlen_func
+        
+        # Also patch the internal forward function if possible
+        try:
+            # Patch the autograd function's forward method
+            if hasattr(flash_attn.flash_attn_interface, 'FlashAttnVarlenFunc'):
+                FlashAttnVarlenFunc = flash_attn.flash_attn_interface.FlashAttnVarlenFunc
+                original_forward = FlashAttnVarlenFunc.forward
+                
+                @staticmethod
+                def patched_forward(ctx, *args, **kwargs):
+                    # Ensure cu_seqlens_q and cu_seqlens_k are on CUDA
+                    # The signature varies, so we need to handle it flexibly
+                    args_list = list(args)
+                    
+                    # Find q, k, v, cu_seqlens_q, cu_seqlens_k in args
+                    # Typically: ctx, q, k, v, cu_seqlens_q, cu_seqlens_k, ...
+                    if len(args_list) >= 2:
+                        q = args_list[1]  # q is typically the 2nd arg after ctx
+                        if isinstance(q, torch.Tensor) and q.is_cuda:
+                            # cu_seqlens_q is typically the 5th arg (index 4 after ctx)
+                            if len(args_list) >= 5:
+                                cu_seqlens_q = args_list[4]
+                                if cu_seqlens_q is not None:
+                                    if isinstance(cu_seqlens_q, torch.Tensor) and not cu_seqlens_q.is_cuda:
+                                        args_list[4] = cu_seqlens_q.to(q.device)
+                                    elif not isinstance(cu_seqlens_q, torch.Tensor):
+                                        args_list[4] = torch.tensor(cu_seqlens_q, device=q.device, dtype=torch.int32)
+                            
+                            # cu_seqlens_k is typically the 6th arg (index 5 after ctx)
+                            if len(args_list) >= 6:
+                                cu_seqlens_k = args_list[5]
+                                if cu_seqlens_k is not None:
+                                    if isinstance(cu_seqlens_k, torch.Tensor) and not cu_seqlens_k.is_cuda:
+                                        args_list[5] = cu_seqlens_k.to(q.device)
+                                    elif not isinstance(cu_seqlens_k, torch.Tensor):
+                                        args_list[5] = torch.tensor(cu_seqlens_k, device=q.device, dtype=torch.int32)
+                    
+                    return original_forward(ctx, *args_list, **kwargs)
+                
+                FlashAttnVarlenFunc.forward = patched_forward
+        except Exception:
+            pass  # If this patch fails, continue with the main patch
+        
+        # Also patch the low-level wrapper function that does the CUDA check
+        try:
+            if hasattr(flash_attn.flash_attn_interface, '_wrapped_flash_attn_varlen_forward'):
+                original_wrapped = flash_attn.flash_attn_interface._wrapped_flash_attn_varlen_forward
+                
+                def patched_wrapped(*args, **kwargs):
+                    # Try to fix cu_seqlens_q in args
+                    args_list = list(args)
+                    if len(args_list) >= 4:
+                        cu_seqlens_q = args_list[3]
+                        if cu_seqlens_q is not None and isinstance(cu_seqlens_q, torch.Tensor) and not cu_seqlens_q.is_cuda:
+                            args_list[3] = cu_seqlens_q.cuda()
+                    return original_wrapped(*args_list, **kwargs)
+                
+                flash_attn.flash_attn_interface._wrapped_flash_attn_varlen_forward = patched_wrapped
+        except Exception:
+            pass
+        
+    except Exception:
+        pass  # If flash_attn is not available or patching fails, continue
+    
     import vllm
     from vllm import AsyncEngineArgs, AsyncLLMEngine, SamplingParams, EngineArgs, LLMEngine
 except Exception:
@@ -479,6 +615,11 @@ class VllmEngine(InferEngine):
     @staticmethod
     def patch_remove_log():
         from vllm.engine import async_llm_engine
+
+        # Check if the method exists before trying to patch it (vLLM version compatibility)
+        if not hasattr(async_llm_engine, '_log_task_completion'):
+            # Method doesn't exist in this vLLM version, skip patching
+            return
 
         async_llm_engine._origin_log_task_completion = async_llm_engine._log_task_completion
 

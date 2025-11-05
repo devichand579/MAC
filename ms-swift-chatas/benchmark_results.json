@@ -1,0 +1,83 @@
+{
+  "paligemma": {
+    "model_name": "paligemma",
+    "model_path": "google/paligemma2-3b-pt-224",
+    "adapter_path": "../ckpts/Imagechat_ckpts/Paligemma",
+    "total_samples": 10,
+    "warmup_samples": 5,
+    "load_time_seconds": 32.114672899246216,
+    "total_inference_time_seconds": 14.801690816879272,
+    "average_time_per_sample_seconds": 1.4801690816879272,
+    "average_time_per_sample_individual_seconds": 1.4794138193130493,
+    "min_sample_time_seconds": 1.4652411937713623,
+    "max_sample_time_seconds": 1.5107402801513672,
+    "std_sample_time_seconds": 0.014463548861724344,
+    "throughput_samples_per_second": 0.675598492342266,
+    "sample_times": [
+      1.4827079772949219,
+      1.4774565696716309,
+      1.5107402801513672,
+      1.4652411937713623,
+      1.4653124809265137,
+      1.4836602210998535,
+      1.4793884754180908,
+      1.4664628505706787,
+      1.4695045948028564,
+      1.4936635494232178
+    ]
+  },
+  "qwen": {
+    "model_name": "qwen",
+    "model_path": "qwen/Qwen2-VL-2B-Instruct",
+    "adapter_path": "../ckpts/Imagechat_ckpts/Qwen2_VL",
+    "total_samples": 10,
+    "warmup_samples": 5,
+    "load_time_seconds": 35.8577516078949,
+    "total_inference_time_seconds": 7.338045835494995,
+    "average_time_per_sample_seconds": 0.7338045835494995,
+    "average_time_per_sample_individual_seconds": 0.7331325292587281,
+    "min_sample_time_seconds": 0.5871016979217529,
+    "max_sample_time_seconds": 0.835310697555542,
+    "std_sample_time_seconds": 0.11151048672632631,
+    "throughput_samples_per_second": 1.3627606346677228,
+    "sample_times": [
+      0.6320714950561523,
+      0.5985817909240723,
+      0.8009185791015625,
+      0.820258617401123,
+      0.835310697555542,
+      0.600658655166626,
+      0.5871016979217529,
+      0.8222639560699463,
+      0.8118493556976318,
+      0.8223104476928711
+    ]
+  },
+  "minicpm_i": {
+    "model_name": "minicpm_i",
+    "model_path": "openbmb/MiniCPM-V-2_6",
+    "adapter_path": "../ckpts/Imagechat_ckpts/MiniCPM_V",
+    "total_samples": 10,
+    "warmup_samples": 5,
+    "load_time_seconds": 80.99026846885681,
+    "total_inference_time_seconds": 20.891205310821533,
+    "average_time_per_sample_seconds": 2.0891205310821532,
+    "average_time_per_sample_individual_seconds": 2.086568808555603,
+    "min_sample_time_seconds": 0.7028794288635254,
+    "max_sample_time_seconds": 2.7831451892852783,
+    "std_sample_time_seconds": 0.7942476143110154,
+    "throughput_samples_per_second": 0.4786703232876685,
+    "sample_times": [
+      1.087282419204712,
+      2.748926877975464,
+      0.7028794288635254,
+      1.7007746696472168,
+      1.5187437534332275,
+      2.7483115196228027,
+      2.0394253730773926,
+      2.7831451892852783,
+      2.7675063610076904,
+      2.7686924934387207
+    ]
+  }
+}
