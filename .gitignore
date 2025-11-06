@@ -51,6 +51,7 @@ env/
 *.hdf5
 *.pkl
 *.model
+*.npy
 
 # Temporary files
 *.swp
