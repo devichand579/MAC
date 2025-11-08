@@ -1,0 +1,31 @@
+{
+  "model_name": "qwen2-vl-2b-openvino",
+  "model_id": "devichand/Qwen2-VL-2B-Instruct-openvino",
+  "total_samples": 10,
+  "warmup_samples": 5,
+  "load_time_seconds": 14.299397468566895,
+  "total_inference_time_seconds": 79.37035155296326,
+  "average_time_per_sample_seconds": 7.937035155296326,
+  "average_time_per_sample_individual_seconds": 7.936642599105835,
+  "min_sample_time_seconds": 7.779197692871094,
+  "max_sample_time_seconds": 8.093446493148804,
+  "std_sample_time_seconds": 0.11804295966025986,
+  "throughput_samples_per_second": 0.1259916304305024,
+  "sample_times": [
+    7.848287343978882,
+    7.845935821533203,
+    7.785893678665161,
+    7.779197692871094,
+    7.924687623977661,
+    7.966646671295166,
+    8.093446493148804,
+    8.036343336105347,
+    8.085811853408813,
+    8.000175476074219
+  ],
+  "cpu_memory_initial_gb": 0.6645889282226562,
+  "cpu_memory_post_load_gb": 1.2708740234375,
+  "cpu_memory_model_gb": 0.6062850952148438,
+  "cpu_memory_peak_gb": 8.976375579833984,
+  "cpu_memory_min_required_gb": 8.976375579833984
+}

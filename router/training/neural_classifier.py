@@ -10,6 +10,9 @@ from sklearn.preprocessing import LabelEncoder
 import logging
 import joblib
 import argparse
+from typing import Dict, Any, Tuple, Optional, List
+import json
+import random
 
 from router.utils.dataset_utils import DatasetType, get_combined_score, get_dataset, partial_f1
 from router.utils.modelling_utils import load_combined_pred_by_idx
@@ -65,7 +68,8 @@ class MLPClassifier(nn.Module):
 def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: DatasetType, 
                    hidden_dims=[256, 128, 64], epochs=100, batch_size=256, learning_rate=0.001, 
                    device='cuda' if torch.cuda.is_available() else 'cpu', 
-                   use_cost_loss=False, lambda_weight=0.5):
+                   use_cost_loss=False, lambda_weight=0.5, dropout=0.2, 
+                   return_val_metrics=False, val_split=0.2):
     """
     Train a 2-3 layer MLP on embeddings for model classification.
     
@@ -80,10 +84,14 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
         device: Device to use ('cuda' or 'cpu')
         use_cost_loss: Whether to use cost-weighted loss (default: False)
         lambda_weight: Weight for cross-entropy loss in combined loss: lambda * CE + (1-lambda) * Cost (default: 0.5)
+        dropout: Dropout rate (default: 0.2)
+        return_val_metrics: If True, return validation metrics instead of full evaluation (default: False)
+        val_split: Validation split ratio (default: 0.2)
     
     Returns:
         model: Trained PyTorch model
         label_encoder: LabelEncoder for model labels
+        (if return_val_metrics=True) metrics dict with 'accuracy', 'combined_score', 'avg_cost'
     """
     # Load embeddings and mapping
     logger.info(f"Loading embeddings from {embeddings_path}")
@@ -140,11 +148,10 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
                 logger.warning(f"Model '{class_name}' not found in cost_mapping. Using default cost: {default_cost}")
                 costs.append(default_cost)
         
-        # Normalize costs to [0, 1] range for better training stability
-        max_cost = max(costs)
-        min_cost = min(costs)
-        if max_cost > min_cost:
-            costs_normalized = [(c - min_cost) / (max_cost - min_cost) for c in costs]
+        # Normalize costs to [0, 1] range using max normalization (aligned with RandomForest)
+        max_cost = max(cost_mapping.values())  # Use max from cost_mapping, not from costs
+        if max_cost > 0:
+            costs_normalized = [c / max_cost for c in costs]
         else:
             costs_normalized = [0.5] * len(costs)  # All same cost
         
@@ -165,11 +172,11 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
     # Split data
     X_train, X_test, y_train, y_test, idx_train, idx_test = train_test_split(
         embeddings, encoded_labels, idx_values, 
-        test_size=0.2, random_state=42, 
+        test_size=val_split, random_state=42, 
         stratify=encoded_labels if len(np.unique(encoded_labels)) > 1 else None
     )
     
-    logger.info(f"Training set shape: {X_train.shape}, Test set shape: {X_test.shape}")
+    logger.info(f"Training set shape: {X_train.shape}, Test/Val set shape: {X_test.shape}")
     
     # Create datasets and dataloaders
     train_dataset = EmbeddingDataset(X_train, y_train)
@@ -180,7 +187,7 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
     
     # Create model
     input_dim = embeddings.shape[1]
-    model = MLPClassifier(input_dim, hidden_dims, num_classes).to(device)
+    model = MLPClassifier(input_dim, hidden_dims, num_classes, dropout=dropout).to(device)
     logger.info(f"Model architecture:\n{model}")
     
     # Loss and optimizer
@@ -216,7 +223,7 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
                 # Average over batch
                 cost_loss = torch.mean(expected_cost)
                 # Combined loss: lambda * CE + (1 - lambda) * Cost
-                loss = lambda_weight * ce_loss + (1 - lambda_weight) * cost_loss
+                loss = (1-lambda_weight) * ce_loss + lambda_weight * cost_loss
             else:
                 loss = ce_loss
             
@@ -272,16 +279,53 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
     
     # Calculate metrics
     accuracy = accuracy_score(all_labels, all_preds)
+    
+    # Create reverse mapping for model labels
+    model_label_map = dict(zip(label_encoder.classes_, range(len(label_encoder.classes_))))
+    rev_model_label_map = {v: k for k, v in model_label_map.items()}
+    
+    # If return_val_metrics is True, return early with validation metrics
+    if return_val_metrics:
+        # Calculate average cost
+        avg_cost = 0.0
+        for pred in all_preds:
+            model_name = rev_model_label_map[pred]
+            model_name_normalized = model_name.lower().strip()
+            if model_name_normalized in cost_mapping:
+                avg_cost += cost_mapping[model_name_normalized]
+            else:
+                avg_cost += sum(cost_mapping.values()) / len(cost_mapping)
+        avg_cost /= len(all_preds) if len(all_preds) > 0 else 1.0
+        
+        # Calculate combined score if dataset is available
+        combined_score = None
+        try:
+            dataset = get_dataset(dataset_type)
+            combined_pred_by_idx_filename = f"combined_pred_by_idx_{dataset_type.value}.json"
+            combined_pred_by_idx = load_combined_pred_by_idx(combined_pred_by_idx_filename)
+            
+            y_pred_df = pd.DataFrame({
+                'idx': idx_test,
+                'model': [rev_model_label_map[pred] for pred in all_preds]
+            })
+            combined_score = get_combined_score(dataset, combined_pred_by_idx, y_pred_df)
+        except Exception as e:
+            logger.warning(f"Could not calculate combined score: {e}")
+        
+        metrics = {
+            'accuracy': accuracy,
+            'avg_cost': avg_cost,
+            'combined_score': combined_score
+        }
+        return model, label_encoder, metrics
+    
+    # Full evaluation (original behavior)
     report = classification_report(all_labels, all_preds, zero_division=0)
     
     logger.info(f"Final Test Accuracy: {accuracy:.4f}")
     logger.info(f"Classification Report:\n{report}")
     
     print(f"\nFinal Test Accuracy: {accuracy:.4f}")
-    
-    # Create reverse mapping for model labels
-    model_label_map = dict(zip(label_encoder.classes_, range(len(label_encoder.classes_))))
-    rev_model_label_map = {v: k for k, v in model_label_map.items()}
     print(f"Label mapping: {model_label_map}")
     
     # Evaluate with combined score
@@ -353,6 +397,310 @@ def train_mlp_model(embeddings_path: str, mapping_path: str, dataset_type: Datas
     
     return model, label_encoder
 
+
+def hyperparameter_tuning(
+    embeddings_path: str,
+    mapping_path: str,
+    dataset_type: DatasetType,
+    scoring_metric: str = 'cost_weighted',
+    device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
+    val_split: float = 0.2,
+    n_iter: int = 50
+) -> Tuple[Dict[str, Any], Any, Any]:
+    """
+    Perform hyperparameter tuning for MLP classifier using random search.
+    
+    Args:
+        embeddings_path: Path to the embeddings .npy file
+        mapping_path: Path to the embedding mapping CSV file
+        dataset_type: The type of dataset being used
+        scoring_metric: Metric to optimize (always 'cost_weighted' for cost-accuracy tradeoff)
+        device: Device to use ('cuda' or 'cpu')
+        val_split: Validation split ratio (default: 0.2)
+        n_iter: Number of random hyperparameter combinations to try (default: 50)
+    
+    Returns:
+        best_params: Dictionary of best hyperparameters
+        best_model: Best trained model
+        best_label_encoder: Label encoder for best model
+    """
+    # Always use cost_weighted scoring
+    scoring_metric = 'cost_weighted'
+    logger.info(f"Starting hyperparameter tuning with random search (n_iter={n_iter}), metric={scoring_metric} (always cost_weighted)")
+    
+    # Define search space - only tuning: hidden_dims, epochs, learning_rate, lambda_weight
+    # Using default values for batch_size=256 and dropout=0.2
+    search_space = {
+        'hidden_dims': [
+            [128, 64],           # 2 layers
+            [256, 128],           # 2 layers
+            [256, 128, 64],       # 3 layers
+            [512, 256],           # 2 layers
+            [512, 256, 128],      # 3 layers
+            [128],                # 1 layer
+            [256],                # 1 layer
+            [64, 32],             # 2 layers (smaller)
+        ],
+        'epochs': [50, 100],
+        'learning_rate': [0.0001, 0.0005, 0.001],
+        'lambda_weight': [0.0, 0.25, 0.5, 0.75, 1.0]  # Always use cost_weighted, so always include lambda options
+    }
+    
+    # Default values for non-tuned parameters
+    default_batch_size = 256
+    default_dropout = 0.2
+    
+    # Cost mapping for normalization (same as RandomForest)
+    cost_mapping = {
+        'paligemma': 1.4802,
+        'qwen2.vl.2b.instruct': 0.7338,
+        'minicpm_image': 2.0891,
+        'qb': 0.00094
+    }
+    max_cost = max(cost_mapping.values())  # 2.0891
+    
+    # Track best model for each lambda weight separately
+    best_per_lambda = {}  # {lambda_weight: {'params': ..., 'model': ..., 'label_encoder': ..., 'score': ..., 'metrics': ...}}
+    all_results = []
+    
+    # Generate hyperparameter combinations using random search
+    # Do n_iter iterations for each lambda_weight value
+    all_lambda_weights = search_space['lambda_weight']
+    total_trials = len(all_lambda_weights) * n_iter
+    logger.info(f"Generated {total_trials} random hyperparameter combinations to try")
+    logger.info(f"({n_iter} iterations for each of {len(all_lambda_weights)} lambda_weight values)")
+    logger.info(f"Will find best model separately for each lambda_weight: {all_lambda_weights}")
+    
+    # Run trials - process each lambda weight separately
+    for lambda_weight in all_lambda_weights:
+        logger.info(f"\n{'='*80}")
+        logger.info(f"TUNING FOR LAMBDA_WEIGHT = {lambda_weight}")
+        logger.info(f"{'='*80}")
+        
+        best_score = float('-inf')
+        best_params = None
+        best_model = None
+        best_label_encoder = None
+        best_metrics = None
+        
+        # Generate n_iter random combinations for this lambda_weight
+        trials = []
+        for _ in range(n_iter):
+            trial = {
+                'hidden_dims': random.choice(search_space['hidden_dims']),
+                'epochs': random.choice(search_space['epochs']),
+                'learning_rate': random.choice(search_space['learning_rate']),
+                'use_cost_loss': True,
+                'lambda_weight': lambda_weight  # Fixed for this lambda group
+            }
+            trials.append(trial)
+        
+        # Run trials for this lambda_weight
+        for i, params in enumerate(trials):
+            logger.info(f"\n{'-'*80}")
+            logger.info(f"Lambda {lambda_weight} - Trial {i+1}/{len(trials)}")
+            logger.info(f"Hyperparameters: {params}")
+            logger.info(f"{'-'*80}")
+            
+            try:
+                # Train model with these hyperparameters (using defaults for batch_size and dropout)
+                model, label_encoder, metrics = train_mlp_model(
+                    embeddings_path=embeddings_path,
+                    mapping_path=mapping_path,
+                    dataset_type=dataset_type,
+                    hidden_dims=params['hidden_dims'],
+                    epochs=params['epochs'],
+                    batch_size=default_batch_size,  # Use default
+                    learning_rate=params['learning_rate'],
+                    device=device,
+                    use_cost_loss=params['use_cost_loss'],
+                    lambda_weight=params['lambda_weight'],
+                    dropout=default_dropout,  # Use default
+                    return_val_metrics=True,
+                    val_split=val_split
+                )
+                
+                if model is None or label_encoder is None:
+                    logger.warning(f"Lambda {lambda_weight} - Trial {i+1} failed: model training returned None")
+                    continue
+                
+                # Use cost_weighted scoring matching RandomForest approach exactly
+                # RandomForest: 
+                #   1. calculate_cost_score returns -avg_cost (negative)
+                #   2. normalized_cost = -cost_score / max_cost = avg_cost / max_cost (positive, 0-1)
+                #   3. combined_score = (1 - cost_weight) * accuracy + cost_weight * normalized_cost
+                # For neural: we use lambda_weight as cost_weight (weight for cost in score)
+                lambda_w = params['lambda_weight']  # This acts as cost_weight in the scorer
+                # Calculate cost_score as negative (matching RandomForest)
+                cost_score = -metrics['avg_cost']  # Negative because lower cost is better
+                # Normalize cost score to 0-1 range (matching RandomForest)
+                normalized_cost = -cost_score / max_cost  # cost_score is negative, so negate to get positive
+                # Combined score: (1 - lambda) * accuracy + lambda * normalized_cost
+                # Higher is better for both accuracy and normalized_cost
+                score = (1 - lambda_w) * metrics['accuracy'] + lambda_w * normalized_cost
+                
+                result = {
+                    'trial': i + 1,
+                    'lambda_weight': lambda_weight,
+                    'params': params,
+                    'metrics': metrics,
+                    'score': score
+                }
+                all_results.append(result)
+                
+                logger.info(f"Lambda {lambda_weight} - Trial {i+1} Results:")
+                logger.info(f"  Accuracy: {metrics['accuracy']:.4f}")
+                logger.info(f"  Avg latency: {metrics['avg_cost']:.4f}")
+                if metrics['combined_score'] is not None:
+                    if isinstance(metrics['combined_score'], dict):
+                        # get_combined_score returns a dict with f1, precision, recall, syntactic_match
+                        logger.info(f"  Combined Score: {metrics['combined_score']}")
+                    else:
+                        logger.info(f"  Combined Score: {metrics['combined_score']:.4f}")
+                logger.info(f"  Cost-Weighted Score: {score:.4f} ((1-{params['lambda_weight']:.2f}) * accuracy + {params['lambda_weight']:.2f} * normalized_cost)")
+                
+                # Update best for this lambda_weight if this is better
+                if score > best_score:
+                    best_score = score
+                    best_params = params.copy()
+                    best_model = model
+                    best_label_encoder = label_encoder
+                    best_metrics = metrics.copy()
+                    logger.info(f"  *** New best for lambda {lambda_weight}! ***")
+                
+            except Exception as e:
+                logger.error(f"Lambda {lambda_weight} - Trial {i+1} failed with error: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+                continue
+        
+        # Store best model for this lambda_weight
+        if best_params is not None:
+            best_per_lambda[lambda_weight] = {
+                'params': best_params,
+                'model': best_model,
+                'label_encoder': best_label_encoder,
+                'score': best_score,
+                'metrics': best_metrics
+            }
+            logger.info(f"\nBest model for lambda_weight={lambda_weight}:")
+            logger.info(f"  Score: {best_score:.4f}")
+            logger.info(f"  Accuracy: {best_metrics['accuracy']:.4f}")
+            logger.info(f"  Avg Cost: {best_metrics['avg_cost']:.4f}")
+            logger.info(f"  Params: hidden_dims={best_params['hidden_dims']}, epochs={best_params['epochs']}, lr={best_params['learning_rate']}")
+        else:
+            logger.warning(f"No successful trials for lambda_weight={lambda_weight}")
+    
+    # Print summary of best models per lambda
+    logger.info(f"\n{'='*80}")
+    logger.info("HYPERPARAMETER TUNING SUMMARY - BEST MODEL PER LAMBDA WEIGHT")
+    logger.info(f"{'='*80}")
+    for lambda_w in sorted(best_per_lambda.keys()):
+        best = best_per_lambda[lambda_w]
+        logger.info(f"\nLambda Weight: {lambda_w}")
+        logger.info(f"  Best Score: {best['score']:.4f}")
+        logger.info(f"  Accuracy: {best['metrics']['accuracy']:.4f}")
+        logger.info(f"  Avg Cost: {best['metrics']['avg_cost']:.4f}")
+        logger.info(f"  Params: {best['params']}")
+    
+    # Save results to JSON
+    results_file = f'hyperparameter_tuning_results_{dataset_type.value}.json'
+    with open(results_file, 'w') as f:
+        json.dump({
+            'best_per_lambda': {
+                str(lambda_w): {
+                    'params': best_per_lambda[lambda_w]['params'],
+                    'score': best_per_lambda[lambda_w]['score'],
+                    'metrics': best_per_lambda[lambda_w]['metrics']
+                }
+                for lambda_w in best_per_lambda.keys()
+            },
+            'scoring_metric': scoring_metric,
+            'all_results': [
+                {
+                    'trial': r['trial'],
+                    'lambda_weight': r.get('lambda_weight', r['params']['lambda_weight']),
+                    'params': r['params'],
+                    'metrics': r['metrics'],
+                    'score': r['score']
+                }
+                for r in all_results
+            ]
+        }, f, indent=2)
+    logger.info(f"\nResults saved to {results_file}")
+    
+    # Print performance summary table for best models per lambda
+    if best_per_lambda:
+        logger.info(f"\n{'='*80}")
+        logger.info("PERFORMANCE SUMMARY - BEST MODEL FOR EACH LAMBDA WEIGHT")
+        logger.info(f"{'='*80}")
+        
+        # Print summary table
+        logger.info(f"{'Lambda':<10} {'Accuracy':<12} {'Avg Cost':<12} {'F1 Score':<12} {'Precision':<12} {'Recall':<12} {'Architecture':<30}")
+        logger.info("-" * 100)
+        for lambda_w in sorted(best_per_lambda.keys()):
+            best = best_per_lambda[lambda_w]
+            metrics = best['metrics']
+            combined = metrics['combined_score']
+            params = best['params']
+            arch_str = f"{params['hidden_dims']}, {params['epochs']}ep, lr={params['learning_rate']}"
+            
+            if combined is not None and isinstance(combined, dict):
+                f1 = combined.get('f1', 'N/A')
+                precision = combined.get('precision', 'N/A')
+                recall = combined.get('recall', 'N/A')
+                logger.info(f"{lambda_w:<10.2f} {metrics['accuracy']:<12.4f} {metrics['avg_cost']:<12.4f} "
+                          f"{f1:<12.4f if isinstance(f1, (int, float)) else 'N/A':<12} "
+                          f"{precision:<12.4f if isinstance(precision, (int, float)) else 'N/A':<12} "
+                          f"{recall:<12.4f if isinstance(recall, (int, float)) else 'N/A':<12} "
+                          f"{arch_str:<30}")
+            else:
+                logger.info(f"{lambda_w:<10.2f} {metrics['accuracy']:<12.4f} {metrics['avg_cost']:<12.4f} {'N/A':<12} {'N/A':<12} {'N/A':<12} {arch_str:<30}")
+        
+        print(f"\n{'='*80}")
+        print("PERFORMANCE SUMMARY - BEST MODEL FOR EACH LAMBDA WEIGHT")
+        print(f"{'='*80}")
+        print(f"{'Lambda':<10} {'Accuracy':<12} {'Avg Cost':<12} {'F1 Score':<12} {'Precision':<12} {'Recall':<12} {'Architecture':<30}")
+        print("-" * 100)
+        for lambda_w in sorted(best_per_lambda.keys()):
+            best = best_per_lambda[lambda_w]
+            metrics = best['metrics']
+            combined = metrics['combined_score']
+            params = best['params']
+            arch_str = f"{params['hidden_dims']}, {params['epochs']}ep, lr={params['learning_rate']}"
+            
+            if combined is not None and isinstance(combined, dict):
+                f1 = combined.get('f1', 'N/A')
+                precision = combined.get('precision', 'N/A')
+                recall = combined.get('recall', 'N/A')
+                f1_str = f"{f1:.4f}" if isinstance(f1, (int, float)) else 'N/A'
+                prec_str = f"{precision:.4f}" if isinstance(precision, (int, float)) else 'N/A'
+                rec_str = f"{recall:.4f}" if isinstance(recall, (int, float)) else 'N/A'
+                print(f"{lambda_w:<10.2f} {metrics['accuracy']:<12.4f} {metrics['avg_cost']:<12.4f} "
+                      f"{f1_str:<12} {prec_str:<12} {rec_str:<12} {arch_str:<30}")
+            else:
+                print(f"{lambda_w:<10.2f} {metrics['accuracy']:<12.4f} {metrics['avg_cost']:<12.4f} {'N/A':<12} {'N/A':<12} {'N/A':<12} {arch_str:<30}")
+    
+    # Return the model with the highest score across ALL lambda weights
+    if best_per_lambda:
+        # Find the lambda weight with the highest score
+        best_lambda = max(best_per_lambda.keys(), key=lambda l: best_per_lambda[l]['score'])
+        best_params = best_per_lambda[best_lambda]['params']
+        best_model = best_per_lambda[best_lambda]['model']
+        best_label_encoder = best_per_lambda[best_lambda]['label_encoder']
+        logger.info(f"\nOverall best model (highest score across all lambda weights):")
+        logger.info(f"  Lambda weight: {best_lambda}")
+        logger.info(f"  Score: {best_per_lambda[best_lambda]['score']:.4f}")
+        logger.info(f"  Accuracy: {best_per_lambda[best_lambda]['metrics']['accuracy']:.4f}")
+        logger.info(f"  Avg Cost: {best_per_lambda[best_lambda]['metrics']['avg_cost']:.4f}")
+    else:
+        best_params = None
+        best_model = None
+        best_label_encoder = None
+    
+    return best_params, best_model, best_label_encoder
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train MLP classifier on embeddings for model selection")
     parser.add_argument('--embeddings_path', type=str, default=None, 
@@ -376,6 +724,12 @@ if __name__ == '__main__':
                        help='Enable cost-weighted loss: lambda * CE + (1-lambda) * Cost')
     parser.add_argument('--lambda', type=float, default=0.5, dest='lambda_weight',
                        help='Weight for cross-entropy loss in combined loss (default: 0.5)')
+    parser.add_argument('--dropout', type=float, default=0.2,
+                       help='Dropout rate (default: 0.2)')
+    parser.add_argument('--use_hyperparameter_tuning', action='store_true',
+                       help='Enable hyperparameter tuning (uses random search)')
+    parser.add_argument('--n_iter', type=int, default=50,
+                       help='Number of random hyperparameter combinations to try (default: 50)')
     
     args = parser.parse_args()
     
@@ -402,27 +756,69 @@ if __name__ == '__main__':
     logger.info(f"Using mapping: {mapping_path}")
     logger.info(f"Using device: {device}")
     
-    trained_model, label_encoder = train_mlp_model(
-        embeddings_path=embeddings_path,
-        mapping_path=mapping_path,
-        dataset_type=dataset_type,
-        hidden_dims=args.hidden_dims,
-        epochs=args.epochs,
-        batch_size=args.batch_size,
-        learning_rate=args.learning_rate,
-        device=device,
-        use_cost_loss=args.use_cost_loss,
-        lambda_weight=args.lambda_weight
-    )
+    if args.use_hyperparameter_tuning:
+        logger.info("Starting hyperparameter tuning...")
+        best_params, trained_model, label_encoder = hyperparameter_tuning(
+            embeddings_path=embeddings_path,
+            mapping_path=mapping_path,
+            dataset_type=dataset_type,
+            device=device,
+            n_iter=args.n_iter
+        )
+        
+        if trained_model and label_encoder:
+            logger.info(f"\nBest hyperparameters found:")
+            for key, value in best_params.items():
+                logger.info(f"  {key}: {value}")
+            
+            # Train final model with best params on full dataset (using best lambda_weight from tuning)
+            logger.info("\nTraining final model with best hyperparameters...")
+            trained_model, label_encoder = train_mlp_model(
+                embeddings_path=embeddings_path,
+                mapping_path=mapping_path,
+                dataset_type=dataset_type,
+                hidden_dims=best_params['hidden_dims'],
+                epochs=best_params['epochs'],
+                batch_size=256,  # Use default
+                learning_rate=best_params['learning_rate'],
+                device=device,
+                use_cost_loss=best_params['use_cost_loss'],
+                lambda_weight=best_params['lambda_weight'],
+                dropout=0.2,  # Use default
+                return_val_metrics=False
+            )
+    else:
+        trained_model, label_encoder = train_mlp_model(
+            embeddings_path=embeddings_path,
+            mapping_path=mapping_path,
+            dataset_type=dataset_type,
+            hidden_dims=args.hidden_dims,
+            epochs=args.epochs,
+            batch_size=args.batch_size,
+            learning_rate=args.learning_rate,
+            device=device,
+            use_cost_loss=args.use_cost_loss,
+            lambda_weight=args.lambda_weight,
+            dropout=args.dropout
+        )
     
     if trained_model and label_encoder:
         # Save the model and label encoder
         model_save_path = f'mlp_classifier_{args.dataset}.pth'
         encoder_save_path = f'mlp_label_encoder_{args.dataset}.pkl'
         
+        # Get hidden_dims from args or best_params
+        if args.use_hyperparameter_tuning:
+            hidden_dims = best_params['hidden_dims']
+            dropout = 0.2  # Use default
+        else:
+            hidden_dims = args.hidden_dims
+            dropout = args.dropout
+        
         torch.save({
             'model_state_dict': trained_model.state_dict(),
-            'hidden_dims': args.hidden_dims,
+            'hidden_dims': hidden_dims,
+            'dropout': dropout,
             'input_dim': trained_model.network[0].in_features,
             'num_classes': trained_model.network[-1].out_features,
         }, model_save_path)
