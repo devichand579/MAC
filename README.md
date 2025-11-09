@@ -1,6 +1,6 @@
-# Multimodal Auto-Completion: A New Task for Predicting User Input in Visually-Grounded Conversations
+# Router-Suggest: A Router for Auto-Completion of User Input in Visually-Grounded Conversations
 
-This repository contains code and datasets for evaluating multimodal vision-language models on multimodal auto-completion task.
+This repository contains code and datasets for evaluating multimodal vision-language models on multimodal auto-completion task and evalute Router-Suggest for model selection between TAC and MAC models.
 
 ## Repository Structure
 
