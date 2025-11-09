@@ -709,13 +709,13 @@ if __name__ == '__main__':
                        help='Path to embedding mapping CSV (default: auto-detect from dataset)')
     parser.add_argument('--dataset', type=str, default='mmdd', choices=['mmdd', 'image_chat'],
                        help='Dataset type')
-    parser.add_argument('--hidden_dims', type=int, nargs='+', default=[ 256, 128, 64],
+    parser.add_argument('--hidden_dims', type=int, nargs='+', default=[ 512, 256, 128 ],
                        help='Hidden layer dimensions (default: [128, 64] for 2 hidden layers)')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=50,
                        help='Number of training epochs (default: 50)')
     parser.add_argument('--batch_size', type=int, default=256,
                        help='Batch size for training (default: 256)')
-    parser.add_argument('--learning_rate', type=float, default=0.001,
+    parser.add_argument('--learning_rate', type=float, default=0.0001,
                        help='Learning rate (default: 0.001)')
     parser.add_argument('--device', type=str, default=None,
                        choices=['cuda', 'cpu'],
