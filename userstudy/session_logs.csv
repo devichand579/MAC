@@ -1,0 +1,49 @@
+session_id,timestamp,event_type,details,event_id,parent_event_id
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:52.819493,model_assigned,"{""model_name"": ""QB_MMDD_Model"", ""slow_model"": true}",event-1,
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:55.057276,keystroke,"{""key"": ""h"", ""prefix"": """"}",event-2,event-1
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:55.579206,suggestion_provided,"{""prefix"": ""h"", ""suggestion"": ""haha""}",event-3,event-1
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:56.593315,keystroke,"{""key"": ""i"", ""prefix"": ""h""}",event-4,event-3
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:56.595795,suggestion_rejected,"{""suggestion"": ""haha"", ""final_text"": ""hi""}",event-5,event-3
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:56.808591,keystroke,"{""key"": "" "", ""prefix"": ""hi""}",event-6,event-5
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:57.371394,suggestion_provided,"{""prefix"": ""hi "", ""suggestion"": ""hi there !""}",event-7,event-5
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:58.642912,keystroke,"{""key"": ""Backspace"", ""prefix"": ""hi ""}",event-8,event-7
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:58.906647,keystroke,"{""key"": ""Backspace"", ""prefix"": ""hi""}",event-9,event-8
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:58.983002,keystroke,"{""key"": ""Backspace"", ""prefix"": ""h""}",event-10,event-9
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:59.134116,keystroke,"{""key"": ""Backspace"", ""prefix"": """"}",event-11,event-10
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:59.306639,keystroke,"{""key"": ""Backspace"", ""prefix"": """"}",event-12,event-11
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:22:59.487938,suggestion_rejected,"{""suggestion"": ""hi there !"", ""final_text"": """"}",event-13,event-9
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:23:01.309146,keystroke,"{""key"": ""Enter"", ""prefix"": """"}",event-14,event-13
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:23:02.585379,keystroke,"{""key"": ""0"", ""prefix"": """"}",event-15,event-14
+5a765645-49dd-4402-ae7c-7f85ce3f9cbd,2025-11-10T09:23:02.585874,completed,"{""final_text"": """", ""rating"": 0}",event-16,event-14
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:23:02.946321,model_assigned,"{""model_name"": ""QB_MMDD_Model"", ""slow_model"": true}",event-1,
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:17.739788,keystroke,"{""key"": ""y"", ""prefix"": """"}",event-2,event-1
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:17.845711,keystroke,"{""key"": ""e"", ""prefix"": ""y""}",event-3,event-2
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:18.073191,keystroke,"{""key"": ""a"", ""prefix"": ""ye""}",event-4,event-3
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:18.611690,suggestion_provided,"{""prefix"": ""yea"", ""suggestion"": ""yeah""}",event-5,event-3
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:19.830345,suggestion_accepted,"{""suggestion"": ""yeah"", ""prefix"": ""yea""}",event-6,event-5
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:20.989363,keystroke,"{""key"": "" "", ""prefix"": ""yeah""}",event-7,event-6
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:21.214554,keystroke,"{""key"": ""w"", ""prefix"": ""yeah ""}",event-8,event-7
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:22.786497,keystroke,"{""key"": ""e"", ""prefix"": ""yeah w""}",event-9,event-8
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:22.815795,suggestion_provided,"{""prefix"": ""yeah we"", ""suggestion"": ""yeah we are old haha""}",event-10,event-8
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:24.875065,keystroke,"{""key"": "" "", ""prefix"": ""yeah we""}",event-11,event-10
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:25.398814,suggestion_provided,"{""prefix"": ""yeah we "", ""suggestion"": ""yeah we are old haha""}",event-12,event-10
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:25.941699,keystroke,"{""key"": ""n"", ""prefix"": ""yeah we ""}",event-13,event-12
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:25.941773,suggestion_rejected,"{""suggestion"": ""yeah we are old haha"", ""final_text"": ""yeah we n""}",event-14,event-12
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:26.134704,keystroke,"{""key"": ""e"", ""prefix"": ""yeah we n""}",event-15,event-14
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:26.332851,keystroke,"{""key"": ""e"", ""prefix"": ""yeah we ne""}",event-16,event-15
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:26.863954,suggestion_provided,"{""prefix"": ""yeah we nee"", ""suggestion"": ""yeah we need""}",event-17,event-15
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:28.861490,suggestion_accepted,"{""suggestion"": ""yeah we need"", ""prefix"": ""yeah we nee""}",event-18,event-17
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:29.407801,keystroke,"{""key"": "" "", ""prefix"": ""yeah we need""}",event-19,event-18
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:29.696774,keystroke,"{""key"": ""t"", ""prefix"": ""yeah we need ""}",event-20,event-19
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:30.225355,suggestion_provided,"{""prefix"": ""yeah we need t"", ""suggestion"": ""yeah we need to .""}",event-21,event-19
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:32.745641,keystroke,"{""key"": ""o"", ""prefix"": ""yeah we need t""}",event-22,event-21
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:32.937190,keystroke,"{""key"": "" "", ""prefix"": ""yeah we need to""}",event-23,event-22
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:33.479681,suggestion_provided,"{""prefix"": ""yeah we need to "", ""suggestion"": ""yeah we need to .""}",event-24,event-22
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:33.803402,suggestion_rejected,"{""suggestion"": ""yeah we need to ."", ""final_text"": ""yeah we need to g""}",event-26,event-24
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:33.803477,keystroke,"{""key"": ""g"", ""prefix"": ""yeah we need to ""}",event-25,event-24
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:34.343529,suggestion_provided,"{""prefix"": ""yeah we need to g"", ""suggestion"": ""yeah we need to go .""}",event-27,event-26
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:34.858442,suggestion_accepted,"{""suggestion"": ""yeah we need to go ."", ""prefix"": ""yeah we need to g""}",event-28,event-27
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:36.174140,keystroke,"{""key"": ""Enter"", ""prefix"": ""yeah we need to go .""}",event-29,event-28
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:38.063775,keystroke,"{""key"": ""7"", ""prefix"": ""yeah we need to go .""}",event-30,event-29
+a5b09ca3-ccc2-423b-a30d-d4e3b03f543c,2025-11-10T09:24:38.063850,completed,"{""final_text"": ""yeah we need to go ."", ""rating"": 7}",event-31,event-29
+a6108472-1b29-4b94-9e2b-8be9248e9a6c,2025-11-10T09:24:38.574899,model_assigned,"{""model_name"": ""QB_MMDD_Model"", ""slow_model"": true}",event-1,

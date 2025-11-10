@@ -1,25 +1,53 @@
 import sys
-sys.path.append('.')
-sys.path.append('models/mpc/')
+import os
+
+# Get root directory (MAC) - assume app.py is run from root directory
+# If running from root, use current directory; otherwise go up from userstudy
+if os.path.basename(os.getcwd()) == 'MAC' or os.path.exists(os.path.join(os.getcwd(), 'MAC')):
+    ROOT_DIR = os.getcwd()
+    if os.path.basename(ROOT_DIR) != 'MAC':
+        # If we're inside MAC, find the MAC directory
+        current = ROOT_DIR
+        while current and os.path.basename(current) != 'MAC':
+            current = os.path.dirname(current)
+        if current:
+            ROOT_DIR = current
+else:
+    # Fallback: assume we're in userstudy directory, go up one level to MAC
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Add paths for imports
+sys.path.append(ROOT_DIR)
+sys.path.append(os.path.join(ROOT_DIR, 'TAC_models', 'qb'))  # For QueryBlazer
+sys.path.append(os.path.join(ROOT_DIR, 'ms-swift-chatas'))  # For swift module
+sys.path.append(os.path.join(ROOT_DIR, 'userstudy', 'models', 'mpc'))
+
 from flask import Flask, render_template, request, jsonify, session, send_from_directory
 import random
 import uuid
 import csv
 from datetime import datetime
-import os
-import random
 import json
-import csv
-import uuid
 import time
 import pandas as pd
-from datetime import datetime
-import os
 import pickle
 import string
-# from models.qb.queryblazer import QueryBlazer, Config
-# from models.mpc.utils import QueryCompletion
+
+# Import QueryBlazer
+try:
+    from queryblazer import QueryBlazer, Config
+    QB_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: QueryBlazer not available: {e}")
+    QB_AVAILABLE = False
+    QueryBlazer = None
+    Config = None
+
+# Import conv module (should be in userstudy directory)
+USERSTUDY_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, USERSTUDY_DIR)
 from conv import CONTEXT_POOL
+
 sys.setrecursionlimit(10000)
 
 
@@ -41,9 +69,12 @@ class MPC_DDC_Model(BaseModel):
             return None
 
     def __init__(self):
-        self.main_trie = self.load_trie_from_file("ckpt/mpc_suff/main.mpc")
+        # Paths relative to root directory
+        mpc_main_path = os.path.join(ROOT_DIR, "userstudy", "ckpt", "mpc_suff", "main.mpc")
+        mpc_suffix_path = os.path.join(ROOT_DIR, "userstudy", "ckpt", "mpc_suff", "suffix.mpc")
+        self.main_trie = self.load_trie_from_file(mpc_main_path)
         self.suffix_trie = None
-        self.suffix_trie = self.load_trie_from_file("ckpt/mpc_suff/suffix.mpc")
+        self.suffix_trie = self.load_trie_from_file(mpc_suffix_path)
     
     def get_completions(self, prefix, k_completions=1, suffix_context=2):
         main_trie = self.main_trie
@@ -98,13 +129,33 @@ class MPC_DDC_Model(BaseModel):
 class QB_MMDD_Model(BaseModel):
     slow_model = True
     def __init__(self):
+        if not QB_AVAILABLE:
+            raise ImportError("QueryBlazer is not available. Please ensure TAC_models/qb is in the path.")
+        
         self.branch_factor = 30
         self.beam_size = 30
         self.topk = 10
         self.length_limit = 100
-        self.encoder = "ckpt/qb/encoder.fst"
-        self.model = "ckpt/qb/ngram.fst"
-        self.precomputed = "ckpt/qb/precomputed.bin"
+        
+        # Use QB_ckpts from root directory (has precomputed.bin)
+        # Fallback to userstudy/ckpt/qb if needed
+        qb_ckpt_dir = os.path.join(ROOT_DIR, "QB_ckpts", "QB_MMDD")
+        if not os.path.exists(os.path.join(qb_ckpt_dir, "precomputed.bin")):
+            # Try userstudy/ckpt/qb
+            qb_ckpt_dir = os.path.join(ROOT_DIR, "userstudy", "ckpt", "qb")
+        
+        self.encoder = os.path.join(qb_ckpt_dir, "encoder.fst")
+        self.model = os.path.join(qb_ckpt_dir, "ngram.fst")
+        self.precomputed = os.path.join(qb_ckpt_dir, "precomputed.bin")
+        
+        # Check if files exist
+        if not os.path.exists(self.encoder):
+            raise FileNotFoundError(f"Encoder not found: {self.encoder}")
+        if not os.path.exists(self.model):
+            raise FileNotFoundError(f"Model not found: {self.model}")
+        if not os.path.exists(self.precomputed):
+            raise FileNotFoundError(f"Precomputed file not found: {self.precomputed}")
+        
         self.config = Config(branch_factor=self.branch_factor, beam_size=self.beam_size, topk=self.topk, length_limit=self.length_limit)
         self.qbz = QueryBlazer(encoder=self.encoder, model=self.model, config=self.config)
         assert self.qbz.LoadPrecomputed(self.precomputed), "Failed to load precomputed data"
@@ -143,7 +194,11 @@ class MiniCPM_Model(BaseModel):
         from swift.llm import PtEngine
         # Initialize the MiniCPM model with the checkpoint
         self.model_name = "openbmb/MiniCPM-V-2_6"
-        self.adapter_path = "../ckpts/MiniCPM-V-2_6_ck_92000"
+        # Use absolute path for adapter
+        adapter_relative_path = os.path.join("ckpts", "Imagechat_ckpts", "MiniCPM_V")
+        self.adapter_path = os.path.join(ROOT_DIR, adapter_relative_path)
+        if not os.path.exists(self.adapter_path):
+            raise FileNotFoundError(f"Adapter path not found: {self.adapter_path}")
         self.engine = PtEngine(self.model_name, max_batch_size=1, adapters=[self.adapter_path], device_map='cuda:0')
         self.slow_model = True
 
@@ -209,17 +264,27 @@ class SimpleModel(BaseModel):
 
 app = Flask(__name__, static_folder='static', template_folder='static')
 app.secret_key = 'super secret key'
-models = {
-    "QB_MMDD_Model": SimpleModel(),
-    "MPC_DDC_Model": SimpleModel(),
-    "SimpleModel": SimpleModel(),
-    "T5cOASST_Model": T5cOASST_Model(),
-    "MiniCPM_Model": MiniCPM_Model(),
-}
-# models = {
-#     "QB_MMDD_Model": QB_MMDD_Model(),
-#     "MPC_DDC_Model": MPC_DDC_Model(),
-# }
+# Initialize models
+models = {}
+try:
+    if QB_AVAILABLE:
+        models["QB_MMDD_Model"] = QB_MMDD_Model()
+    else:
+        models["QB_MMDD_Model"] = SimpleModel()
+except Exception as e:
+    print(f"Warning: Could not initialize QB_MMDD_Model: {e}")
+    models["QB_MMDD_Model"] = SimpleModel()
+
+try:
+    models["MPC_DDC_Model"] = MPC_DDC_Model()
+except Exception as e:
+    print(f"Warning: Could not initialize MPC_DDC_Model: {e}")
+    models["MPC_DDC_Model"] = SimpleModel()
+
+models["SimpleModel"] = SimpleModel()
+models["T5cOASST_Model"] = T5cOASST_Model()
+# MiniCPM_Model is lazy-loaded - only initialize when needed
+# models["MiniCPM_Model"] = MiniCPM_Model()
 
 import json
 
@@ -258,8 +323,8 @@ def get_context():
     use_image_chat = True
     
     if use_image_chat:
-        # Load conversation from CSV file
-        csv_path = 'imagechat_samples/test_samples.csv'
+        # Load conversation from CSV file (path relative to userstudy directory)
+        csv_path = os.path.join(USERSTUDY_DIR, 'imagechat_samples', 'test_samples.csv')
         try:
             # Let's print the first few lines of the file to debug
             print("Checking CSV file content:")
@@ -332,25 +397,30 @@ def get_context():
                 # If this utterance has an image, save the path
                 # Check if image_hash exists and is valid (should be 32 characters for MD5)
                 if 'image_hash' in utterance and utterance['image_hash'] and len(utterance['image_hash']) > 0:
-                    # Verify the image file exists before using it
-                    image_file_path = f"imagechat_samples/images/{utterance['image_hash']}.jpg"
+                    # Use absolute paths for file operations
+                    images_dir = os.path.join(USERSTUDY_DIR, 'imagechat_samples', 'images')
+                    image_file_path = os.path.join(images_dir, f"{utterance['image_hash']}.jpg")
+                    
                     if os.path.exists(image_file_path):
-                        item['image_path'] = image_file_path
-                        # Store the first image path for the model
+                        # Use URL path for frontend (Flask route)
+                        item['image_path'] = f"/imagechat_samples/images/{utterance['image_hash']}.jpg"
+                        # Store the first image path for the model (use file path)
                         if not image_path:
-                            image_path = f"./imagechat_samples/images/{utterance['image_hash']}.jpg"
+                            image_path = image_file_path
                     else:
                         print(f"Warning: Image file not found: {image_file_path}")
                         # Try to find a matching image with a partial hash
                         if len(utterance['image_hash']) >= 8:  # At least 8 chars to avoid false matches
-                            partial_hash = utterance['image_hash']
-                            for img_file in os.listdir('imagechat_samples/images'):
-                                if img_file.startswith(partial_hash) and img_file.endswith('.jpg'):
-                                    print(f"Found matching image with partial hash: {img_file}")
-                                    item['image_path'] = f"imagechat_samples/images/{img_file}"
-                                    if not image_path:
-                                        image_path = f"./imagechat_samples/images/{img_file}"
-                                    break
+                            if os.path.exists(images_dir):
+                                for img_file in os.listdir(images_dir):
+                                    if img_file.startswith(utterance['image_hash']) and img_file.endswith('.jpg'):
+                                        print(f"Found matching image with partial hash: {img_file}")
+                                        # Use URL path for frontend
+                                        item['image_path'] = f"/imagechat_samples/images/{img_file}"
+                                        # Store the first image path for the model (use file path)
+                                        if not image_path:
+                                            image_path = os.path.join(images_dir, img_file)
+                                        break
                 
                 context.append(item)
             
@@ -381,7 +451,16 @@ def get_context():
 
 @app.route('/set_model', methods=['POST'])
 def set_model():
-    model_name = "MiniCPM_Model"
+    model_name = "QB_MMDD_Model"  # Changed to QueryBlazer
+    
+    # Lazy-load MiniCPM if requested (but we're using QB_MMDD_Model)
+    if model_name == 'MiniCPM_Model' and model_name not in models:
+        try:
+            models["MiniCPM_Model"] = MiniCPM_Model()
+        except Exception as e:
+            print(f"Error initializing MiniCPM_Model: {e}")
+            model_name = 'QB_MMDD_Model'  # Fallback to QueryBlazer
+    
     model = models[model_name]
     session['model_name'] = model_name
     return jsonify({'slow_model': model.slow_model, 'model_name': model_name})
@@ -392,12 +471,26 @@ def complete():
     text = data.get('text', '')
     chat_history = data.get('chat_history', [])
     
-    model_name = 'MiniCPM_Model'
+    # Use model from session if set, otherwise default to QB_MMDD_Model
+    model_name = session.get('model_name', 'QB_MMDD_Model')
+    if model_name not in models:
+        # Lazy-load MiniCPM if requested
+        if model_name == 'MiniCPM_Model':
+            try:
+                models["MiniCPM_Model"] = MiniCPM_Model()
+            except Exception as e:
+                print(f"Error initializing MiniCPM_Model: {e}")
+                model_name = 'QB_MMDD_Model'  # Fallback to QueryBlazer
+        else:
+            model_name = 'QB_MMDD_Model'  # Fallback to QueryBlazer
+    
     model = models[model_name]
     
-    if session.get('image_path'):
+    # MiniCPM supports image_path, other models don't
+    if model_name == 'MiniCPM_Model' and session.get('image_path'):
         suggestion = model.complete(text, chat_history, session.get('image_path'))
     else:
+        # For QueryBlazer and other models that don't support image_path
         suggestion = model.complete(text, chat_history)
     
     # Store only the prediction part, not the text + prediction
@@ -421,11 +514,13 @@ def log_event():
 
 @app.route('/imagechat_samples/images/<filename>')
 def serve_imagechat_image(filename):
-    return send_from_directory('imagechat_samples/images', filename)
+    images_dir = os.path.join(USERSTUDY_DIR, 'imagechat_samples', 'images')
+    return send_from_directory(images_dir, filename)
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
-    return send_from_directory('imagechat_samples/images', filename)
+    images_dir = os.path.join(USERSTUDY_DIR, 'imagechat_samples', 'images')
+    return send_from_directory(images_dir, filename)
 
 if __name__ == '__main__':
     port = 5000
