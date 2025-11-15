@@ -1,8 +1,3 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
-"""
-Benchmark script to measure absolute clock times for OpenVINO model inference.
-Tests Qwen2-VL-2B-Instruct OpenVINO model on a mix of MMDD and ImageChat samples.
-"""
 
 import os
 import sys

@@ -208,7 +208,7 @@ This will create a file in the root directory:
 benchmark_results.json
 ```
 
-3. Training the router framework
+4. Training the router framework
 ```bash
 python router/training/neural_classifier.py --dataset <dataset_name>  --use_cost_loss --lambda <lambda_weight>
 ```
@@ -224,9 +224,9 @@ python router/training/neural_classifier.py --dataset <dataset_name> --use_hyper
 ```
 This will print all the scores for the router framework and save the results in the root directory.
 
-4. Analyzing the results
+5. Analyzing the results
 ```bash
-python router/training/analyze_neural_classifier_results.py --input_json <results_file_path> --output_json <output_file_path>
+python analyze_neural_classifier_results.py --input_json <results_file_path> --output_json <output_file_path>
 ```
 This will print the best configuration for the router framework.
 
@@ -268,7 +268,7 @@ This will print all the scores for the router framework and save the results in 
 
 4. Analyzing the results
 ```bash
-python router/training/analyze_rf_results.py --input_json <results_file_path> --output_json <output_file_path>
+python analyze_rf_results.py --input_json <results_file_path> --output_json <output_file_path>
 ```
 This will print the best configuration for the router framework.
 

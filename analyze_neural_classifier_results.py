@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-Analyze neural classifier hyperparameter tuning results.
-Finds best performing models based on:
-1. Least latencies (lowest avg_cost) - per lambda weight
-2. Top 10 models based on F1 score - per lambda weight
-"""
 
 import json
 import argparse

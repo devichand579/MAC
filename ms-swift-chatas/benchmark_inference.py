@@ -1,9 +1,3 @@
-# Copyright (c) Alibaba, Inc. and its affiliates.
-"""
-Benchmark script to measure absolute clock times for model inference.
-Tests 3 models (paligemma, qwen, minicpm_i) on a 100 sample mix of MMDD and ImageChat.
-"""
-
 import os
 import sys
 import time
