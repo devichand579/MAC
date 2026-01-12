@@ -3,6 +3,7 @@
 This repository contains code and datasets for evaluating multimodal vision-language models on multimodal auto-completion task and evalute Router-Suggest for model selection between TAC and MAC models.
 
 - Please downlaod the checkpoints and datasets from [here](https://osf.io/etf2b/overview?view_only=7eb3be65022b48fdb053d15be769a963).
+- Preprint is available [here](https://arxiv.org/abs/2601.05851).
 
 - Before unzipping different multi-part zip files, run the command below with all multi-part files in the same directory to unzip as a single directory.
 ```bash
