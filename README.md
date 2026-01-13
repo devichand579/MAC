@@ -1,4 +1,4 @@
-# Router-Suggest: A Router for Auto-Completion of User Input in Visually-Grounded Conversations [EACL 2026]
+# Router-Suggest: A Router for Auto-Completion of User Input in Visually-Grounded Dialogs [EACL 2026]
 
 This repository contains code and datasets for evaluating multimodal vision-language models on multimodal auto-completion task and evalute Router-Suggest for model selection between TAC and MAC models.
 
