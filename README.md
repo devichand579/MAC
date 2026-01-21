@@ -4,6 +4,7 @@ This repository contains code and datasets for evaluating multimodal vision-lang
 
 - Please downlaod the checkpoints and datasets from [here](https://osf.io/etf2b/overview?view_only=7eb3be65022b48fdb053d15be769a963).
 - Preprint is available [here](https://arxiv.org/abs/2601.05851).
+- Huggingface Collection of checkpoints are available [here](https://huggingface.co/collections/devichand/router-suggest)
 
 - Before unzipping different multi-part zip files, run the command below with all multi-part files in the same directory to unzip as a single directory.
 ```bash
